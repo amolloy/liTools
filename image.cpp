@@ -473,9 +473,9 @@ bool myPicturesToXML(wstring sFilename)
 	}
 	
 	//Read in picture data
-	char cPictureBytes[mph.pictureBytes.count];
+	std::vector<char> cPictureBytes(mph.pictureBytes.count);
 	fseek(f, mph.pictureBytes.offset, SEEK_SET);
-	if(fread(&cPictureBytes, 1, mph.pictureBytes.count, f) != u32(mph.pictureBytes.count))
+	if(fread(&(cPictureBytes[0]), 1, mph.pictureBytes.count, f) != u32(mph.pictureBytes.count))
 	{
 		cout << "Error: Unable to read picture bytes from file " << ws2s(sFilename) << endl;
 		fclose(f);
@@ -653,9 +653,9 @@ bool smokeImageToXML(wstring sFilename)
 	}
 	
 	//Read in picture data
-	uint8_t cPictureBytes[sih.pictureBytes.count];
+	std::vector<uint8_t> cPictureBytes(sih.pictureBytes.count);
 	fseek(f, sih.pictureBytes.offset, SEEK_SET);
-	if(fread(&cPictureBytes, 1, sih.pictureBytes.count, f) != u32(sih.pictureBytes.count))
+	if(fread(&(cPictureBytes[0]), 1, sih.pictureBytes.count, f) != u32(sih.pictureBytes.count))
 	{
 		cout << "Error: Unable to read picture bytes from file " << ws2s(sFilename) << endl;
 		fclose(f);
@@ -848,10 +848,10 @@ bool fluidPalettesToXML(wstring sFilename)
 	
 	//Read in picture data
 	fph.pictureBytes.count *= 4;	//For some reason these are all scaled for i32 pixels rather than i8 pixels
-	char cPictureBytes[fph.pictureBytes.count];
+	std::vector<char> cPictureBytes(fph.pictureBytes.count);
 	fseek(f, fph.pictureBytes.offset, SEEK_SET);
 	//int iNum = ;
-	if(fread(&cPictureBytes, 1, fph.pictureBytes.count, f) != u32(fph.pictureBytes.count))
+	if(fread(&(cPictureBytes[0]), 1, fph.pictureBytes.count, f) != u32(fph.pictureBytes.count))
 	{
 		cout << "Error: Unable to read picture bytes from file " << ws2s(sFilename) << endl;// << ". Only read " << iNum << endl;
 		fclose(f);
