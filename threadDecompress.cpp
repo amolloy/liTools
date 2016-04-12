@@ -1,9 +1,13 @@
 #include "pakDataTypes.h"
+#include <thread>
+#include <future>
+#include <vector>
 
 list<ThreadConvertHelper> g_lThreadedResources;
-u32 g_iCurResource;
-u32 g_iNumResources;
-HANDLE ghMutex;
+static std::atomic<uint32_t> g_iCurResource;
+static std::atomic<uint32_t> g_iNumResources;
+static std::mutex workMutex;
+static std::mutex coutMutex;
 bool g_bProgressOverwrite;
 unsigned int g_iNumThreads;
 
@@ -19,86 +23,61 @@ void makeFolder(u32 resId)
 	ttvfs::CreateDirRec(ws2s(sFilename).c_str());
 }
 
-DWORD WINAPI decompressResource(LPVOID lpParam)
+void decompressResource()
 {
-	for(bool bDone = false;!bDone;)	//Loop until we're done
+	while(true)
 	{
 		ThreadConvertHelper dh;
 		wstring sFilename;
-		DWORD dwWaitResult = WaitForSingleObject(ghMutex,    // wait for mutex
-												 INFINITE);  // no time-out interval
 		
-		switch (dwWaitResult) 
 		{
-			// The thread got ownership of the mutex
-			case WAIT_OBJECT_0:
-				if(!g_lThreadedResources.size())	//Done
-					bDone = true;
-				else
-				{
-					//Grab the top item off the list
-					dh = g_lThreadedResources.front();
-					sFilename = getName(dh.id);	//Mutex on this too, since getName() isn't really threadsafe
-					makeFolder(dh.id);	//Also create folder (not threadsafe, either)
-					g_lThreadedResources.pop_front();	//Done with this element
-				}
-				
-				//Let user know which resource we're converting now
-				if(!bDone)
-				{
-					g_iCurResource++;
-					if(!(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1))
-					{
-						if(g_bProgressOverwrite)
-						{
-							cout << "\rDecompressing file " << g_iCurResource << " out of " << g_iNumResources;
-							cout.flush();
-						}
-						else
-							cout << "Decompressing file " << g_iCurResource << " out of " << g_iNumResources << ": " << ws2s(sFilename) << endl;
-					}
-				}
-				
-				// Release ownership of the mutex object
-				if(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1)	//Don't release residmap.dat mutex until we've read in all the filenames
-				{
-					g_iNumResources--;
-				}
-				else
-				{
-					if (!ReleaseMutex(ghMutex)) 
-					{ 
-						cout << "Error: Unable to release mutex." << endl;
-						return 1;
-					}
-				}
-				break; 
+			std::lock_guard<std::mutex> lock(workMutex);	
+		
+			if(!g_lThreadedResources.size())
+			{
+				break;
+			}
+			else
+			{
+				dh = g_lThreadedResources.front();
+				sFilename = getName(dh.id);
+				makeFolder(dh.id);
+				g_lThreadedResources.pop_front();
+			}
+		}
 
-			// The thread got ownership of an abandoned mutex
-			// This is an indeterminate state
-			case WAIT_ABANDONED: 
-				cout << "Error: Abandoned mutex" << endl;
-				return 1; 
-		}
-		if(bDone)
+		uint32_t currentResource = g_iCurResource.exchange(g_iCurResource + 1);
+		if(!(sFilename == TEXT(RESIDMAP_NAME) && currentResource == 1))
 		{
-			if(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1)
-				ReleaseMutex(ghMutex);
-			continue;	//Stop here if done
+			if(g_bProgressOverwrite)
+			{
+				std::lock_guard<std::mutex> lock(coutMutex);
+				cout << "\rDecompressing file " << currentResource << " out of " << g_iNumResources;
+				cout.flush();
+			}
+			else
+			{
+				std::lock_guard<std::mutex> lock(coutMutex);
+				cout << "Decompressing file " << currentResource << " out of " << g_iNumResources << ": " << ws2s(sFilename) << endl;
+			}
 		}
-			
-		if(dh.bCompressed)	//Compressed
+		
+		if(sFilename == TEXT(RESIDMAP_NAME) && currentResource == 1)
+		{
+			g_iNumResources--;
+		}
+
+		if(dh.bCompressed)
 		{
 			uint8_t* tempData = decompress(&dh.data);
 			if(tempData == NULL)
 			{
+				std::lock_guard<std::mutex> lock(coutMutex);
 				cout << "Error decompressing file " << ws2s(sFilename) << endl;
-				if(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1)
-					ReleaseMutex(ghMutex);
-				return 1;
+				return;
 			}
-			free(dh.data.data);	//Free this compressed memory
-			dh.data.data = tempData;	//Now we have the decompressed data
+			free(dh.data.data);
+			dh.data.data = tempData;
 		}
 		
 		//See if this was a PNG image. Convert PNG images from the data in RAM
@@ -108,23 +87,23 @@ DWORD WINAPI decompressResource(LPVOID lpParam)
 		   sFilename.find(TEXT("colorbgicon")) != wstring::npos ||
 		   sFilename.find(TEXT("greybgicon")) != wstring::npos)			//Also would include .png.normal files as well
 		{
-			convertToPNG(sFilename.c_str(), dh.data.data, dh.data.decompressedSize);	//Do the conversion to PNG
+			convertToPNG(sFilename.c_str(), dh.data.data, dh.data.decompressedSize);	
 		}
-		else	//For other file types, go ahead and write to the file before converting
+		else	
 		{
+			//For other file types, go ahead and write to the file before converting
 			//Write this out to the file
 			FILE* fOut = _wfopen(sFilename.c_str(), TEXT("wb"));
 			if(fOut == NULL)
 			{
+				std::lock_guard<std::mutex> lock(coutMutex);
 				cout << "Unable to open output file " << ws2s(sFilename) << endl;
-				if(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1)
-					ReleaseMutex(ghMutex);
-				return 1;
+				return;
 			}
 			fwrite(dh.data.data, 1, dh.data.decompressedSize, fOut);
 			fclose(fOut);
 		}
-		free(dh.data.data);	//Free memory from this file
+		free(dh.data.data);
 		
 		//Convert wordPackDict.dat to XML
 		if(sFilename.find(TEXT("wordPackDict.dat")) != wstring::npos)
@@ -181,7 +160,12 @@ DWORD WINAPI decompressResource(LPVOID lpParam)
 		{
 			wstring s = sFilename;
 			s += TEXT(".ogg");
+#if 0
 			binaryToOgg(sFilename.c_str(), s.c_str());
+#else
+			std::lock_guard<std::mutex> lock(coutMutex);
+			cout << "Ignoring flac/ogg file" << std::endl;
+#endif
 			unlink(ws2s(sFilename).c_str());	//Delete temporary .flac file
 		}
 		
@@ -228,69 +212,37 @@ DWORD WINAPI decompressResource(LPVOID lpParam)
 		
 		if(sFilename == TEXT(RESIDMAP_NAME) && g_iCurResource == 1)
 		{
-			ReleaseMutex(ghMutex);
 			g_iCurResource--;
 		}
 	}
-	return 0;
 }
 
 void threadedDecompress()
 {
 	g_iCurResource = 0;
 	g_iNumResources = g_lThreadedResources.size();
+		
+	u32 numThreads = g_iNumThreads;
+	if (numThreads == 0)
+	{
+		numThreads = std::thread::hardware_concurrency();
+	}
+	if(numThreads == 0)
+	{
+		numThreads = 2;
+	}
 	
-	//Create mutex
-	ghMutex = CreateMutex(NULL,              // default security attributes
-						  FALSE,             // initially not owned
-					      NULL);             // unnamed mutex
-
-    if (ghMutex == NULL) 
+	std::vector<std::future<void>> threads;
+	
+	for(u32 i = 0; i < numThreads; i++ )
     {
-        cout << "Error: Unable to create mutex for multithreaded decompression. Aborting..." << endl;
-        return;
-    }
-	
-	//Get how many processor cores we have, so we know how many threads to create
-	SYSTEM_INFO siSysInfo; 
-    GetSystemInfo(&siSysInfo);
-	
-	u32 iNumThreads = siSysInfo.dwNumberOfProcessors;
-	if(g_iNumThreads != 0)
-		iNumThreads = g_iNumThreads;
-	
-	//Create memory for the threads
-	HANDLE* aThread = (HANDLE*)malloc(sizeof(HANDLE) * iNumThreads);
-	
-	//Start threads
-	for(u32 i = 0; i < iNumThreads; i++ )
-    {
-        aThread[i] = CreateThread( 
-                     NULL,       // default security attributes
-                     0,          // default stack size
-                     (LPTHREAD_START_ROUTINE) decompressResource, 
-                     NULL,       // no thread function arguments
-                     0,          // default creation flags
-                     NULL); 	 // no thread identifier
-
-        if( aThread[i] == NULL )
-        {
-            cout << "CreateThread error: " << GetLastError() << endl;
-			free(aThread);
-            return;
-        }
+    	threads.emplace_back(std::async(decompressResource));
     }
 
-    // Wait for all threads to terminate
-    WaitForMultipleObjects(iNumThreads, aThread, TRUE, INFINITE);
-
-    // Close thread and mutex handles
-    for(u32 i = 0; i < iNumThreads; i++ )
-        CloseHandle(aThread[i]);
-
-    CloseHandle(ghMutex);
-	
-	free(aThread);
+	for (auto& f : threads)
+	{
+		f.wait();
+	}
 }
 
 
