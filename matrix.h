@@ -126,9 +126,9 @@ public:
 	double _11, _12, _13, _21, _22, _23;
 
 	// these are assumed constants and can't be modified
-	const static double _31 = 0;
-	const static double _32 = 0;
-	const static double _33 = 1;
+	constexpr static double _31 = 0;
+	constexpr static double _32 = 0;
+	constexpr static double _33 = 1;
 	
 	void set(double a, double b, double c, double d, double e, double f)
 	{
