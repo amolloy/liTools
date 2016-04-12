@@ -490,13 +490,13 @@ bool itemManifestToXML(const wchar_t* cFilename)
 	#ifndef SPLIT_XML_FILES
 	wstring sFilename = cFilename;
 	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("itemmanifest");	//Create the root element
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("itemmanifest");	//Create the root element
 	#else
 	wstring sFilename = cFilename;
 	sFilename += TEXT(".xml");
-	XMLDocument* itemmanifest = new XMLDocument;
-	XMLElement* itemroot = itemmanifest->NewElement("items");
+	XMLDocument itemmanifest;
+	XMLElement* itemroot = itemmanifest.NewElement("items");
 	#endif
 	int iCurItemData = 0;
 	
@@ -517,17 +517,17 @@ bool itemManifestToXML(const wchar_t* cFilename)
 	for(list<itemManifestRecord>::iterator i = lManifestRecords.begin(); i != lManifestRecords.end(); i++)
 	{
 		#ifdef SPLIT_XML_FILES
-		XMLDocument* doc = new XMLDocument;
+		XMLDocument doc;
 		wstring sXMLFilename = TEXT("data/items/");
 		sXMLFilename += mItemNames[i->itemId];
 		sXMLFilename += TEXT("/");
 		sXMLFilename += mItemNames[i->itemId];
 		sXMLFilename += TEXT(".xml");
-		XMLElement* file = itemmanifest->NewElement("item");
+		XMLElement* file = itemmanifest.NewElement("item");
 		file->SetAttribute("path", ws2s(sXMLFilename).c_str());
 		itemroot->InsertEndChild(file);
 		#endif
-		XMLElement* elem = doc->NewElement("itemrecord");
+		XMLElement* elem = doc.NewElement("itemrecord");
 		//elem->SetAttribute("name", ws2s(mItemNames[i->itemId]).c_str());
 		elem->SetAttribute("id", i->itemId);
 		//DEBUG
@@ -537,51 +537,51 @@ bool itemManifestToXML(const wchar_t* cFilename)
 		//	oHash << "Hash worked!" << endl;
 		//else
 		//	oHash << "Hash failed." << endl;
-		XMLElement* elem2 = doc->NewElement("animresid");
+		XMLElement* elem2 = doc.NewElement("animresid");
 		elem2->SetAttribute("filename", ws2s(getName(i->animResId)).c_str());
 		elem->InsertEndChild(elem2);
-		elem2 = doc->NewElement("recentlymodifiedrank");	//TODO Ignore this
+		elem2 = doc.NewElement("recentlymodifiedrank");	//TODO Ignore this
 		elem2->SetAttribute("value", i->recentlyModifiedRank);
 		elem->InsertEndChild(elem2);
-		elem2 = doc->NewElement("coloritemicon");
+		elem2 = doc.NewElement("coloritemicon");
 		elem2->SetAttribute("filename", ws2s(getName(i->catalogIconColorItemTexResId)).c_str());
 		elem->InsertEndChild(elem2);
-		elem2 = doc->NewElement("colorbgicon");
+		elem2 = doc.NewElement("colorbgicon");
 		elem2->SetAttribute("filename", ws2s(getName(i->catalogIconColorBGTexResId)).c_str());
 		elem->InsertEndChild(elem2);
-		elem2 = doc->NewElement("greybgicon");
+		elem2 = doc.NewElement("greybgicon");
 		elem2->SetAttribute("filename", ws2s(getName(i->catalogIconGreyBGTexResId)).c_str());
 		elem->InsertEndChild(elem2);
 		//Now insert dependencies for this item
-		elem2 = doc->NewElement("depends");
+		elem2 = doc.NewElement("depends");
 		for(int j = i->firstNormalDepends; j < i->firstNormalDepends + i->numNormalDepends; j++)
 		{
-			XMLElement* elem3 = doc->NewElement("normal");
+			XMLElement* elem3 = doc.NewElement("normal");
 			elem3->SetAttribute("filename", ws2s(getName(vNormalDependencies[j].normalTexResId)).c_str());
 			elem2->InsertEndChild(elem3);
 		}
 		for(int j = i->firstSoundDepends; j < i->firstSoundDepends + i->numSoundDepends; j++)
 		{
-			XMLElement* elem3 = doc->NewElement("sound");
+			XMLElement* elem3 = doc.NewElement("sound");
 			elem3->SetAttribute("filename", ws2s(getSoundName(vSoundDependencies[j].soundResId)).c_str());
 			elem2->InsertEndChild(elem3);
 		}
 		for(int j = i->firstEffectDepends; j < i->firstEffectDepends + i->numEffectDepends; j++)
 		{
-			XMLElement* elem3 = doc->NewElement("effect");
+			XMLElement* elem3 = doc.NewElement("effect");
 			elem3->SetAttribute("filename", ws2s(getName(vEffectDependencies[j].effectResId)).c_str());
 			elem2->InsertEndChild(elem3);
 		}
 		for(int j = i->firstItemDepends; j < i->firstItemDepends + i->numItemDepends; j++)
 		{
-			XMLElement* elem3 = doc->NewElement("item");
+			XMLElement* elem3 = doc.NewElement("item");
 			elem3->SetAttribute("id", ws2s(mItemNames[vItemDependencies[j].itemResId]).c_str());
 			elem2->InsertEndChild(elem3);
 		}
 		elem->InsertEndChild(elem2);
 		
 		//Now deal with item data, only writing each if it differs from the default
-		elem2 = doc->NewElement("itemdata");
+		elem2 = doc.NewElement("itemdata");
 		if(vItemDataHeaders[iCurItemData].absPosition != DEFAULT_ABSPOSITION)
 			elem2->SetAttribute("absPosition", vItemDataHeaders[iCurItemData].absPosition);
 		if(vItemDataHeaders[iCurItemData].allowDirectionalLight != DEFAULT_ALLOWDIRECTIONALLIGHT)
@@ -699,7 +699,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 		XMLElement* elem3;
 		for(list<skelsRecord>::iterator j = vSkeletonRecords[iCurItemData].begin(); j != vSkeletonRecords[iCurItemData].end(); j++)
 		{
-			elem3 = doc->NewElement("skeleton");
+			elem3 = doc.NewElement("skeleton");
 			elem3->SetAttribute("burnExport", j->burnExport);
 			elem3->SetAttribute("selectWeight", j->selectWeight);
 			elem3->SetAttribute("hasAnimThresh", j->hasAnimThresh);
@@ -713,7 +713,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 			XMLElement* elem4;
 			for(int k = j->firstJointIdx; k < j->firstJointIdx + j->numJoints; k++)
 			{
-				elem4 = doc->NewElement("joint");
+				elem4 = doc.NewElement("joint");
 				elem4->SetAttribute("boneIdx1", vJointRecords[iCurItemData][k].boneIdx[0]);
 				elem4->SetAttribute("boneIdx2", vJointRecords[iCurItemData][k].boneIdx[1]);
 				elem4->SetAttribute("boneBurnGridCellIdx1", vJointRecords[iCurItemData][k].boneBurnGridCellIdx[0]);
@@ -732,7 +732,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 			//Add bones for this skeleton
 			for(int k = j->firstBoneIdx; k < j->firstBoneIdx + j->numBones; k++)
 			{
-				elem4 = doc->NewElement("bone");
+				elem4 = doc.NewElement("bone");
 				//Use defaults as we have them
 				elem4->SetAttribute("angularDampEnumValId", vBoneRecords[iCurItemData][k].angularDampEnumValId);
 				elem4->SetAttribute("animBlockIdx", vBoneRecords[iCurItemData][k].animBlockIdx);
@@ -847,7 +847,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				XMLElement* elem5;
 				for(int l = vBoneRecords[iCurItemData][k].firstBoneMainShapeIdx; l < vBoneRecords[iCurItemData][k].firstBoneMainShapeIdx + vBoneRecords[iCurItemData][k].numBoneMainShapes; l++)
 				{
-					elem5 = doc->NewElement("shape");
+					elem5 = doc.NewElement("shape");
 					
 					if(vBoneShapes[iCurItemData][l].flags == TYPE_POLYGON)	//Polygon shape
 					{
@@ -856,7 +856,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 						XMLElement* elem6;
 						for(int m = 0; m < vBoneShapes[iCurItemData][l].numVerts; m++)
 						{
-							elem6 = doc->NewElement("vert");
+							elem6 = doc.NewElement("vert");
 							
 							elem6->SetAttribute("pos", vec2ToString(vBoneShapes[iCurItemData][l].verts[m]).c_str());
 							
@@ -868,10 +868,10 @@ bool itemManifestToXML(const wchar_t* cFilename)
 						elem5->SetAttribute("type", "circle");
 						//Write vertices for this shape
 						XMLElement* elem6;
-						elem6 = doc->NewElement("center");
+						elem6 = doc.NewElement("center");
 						elem6->SetAttribute("pos", vec2ToString(vBoneShapes[iCurItemData][l].verts[0]).c_str());
 						elem5->InsertEndChild(elem6);
-						elem6 = doc->NewElement("radius");
+						elem6 = doc.NewElement("radius");
 						elem6->SetAttribute("value", vBoneShapes[iCurItemData][l].verts[1].x);
 						elem5->InsertEndChild(elem6);
 					}
@@ -884,10 +884,10 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				//Add bone parts
 				if(vBoneRecords[iCurItemData][k].numParts)	//if there are any
 				{
-					elem5 = doc->NewElement("parts");
+					elem5 = doc.NewElement("parts");
 					for(int l = vBoneRecords[iCurItemData][k].firstPartsIdx; l < vBoneRecords[iCurItemData][k].firstPartsIdx + vBoneRecords[iCurItemData][k].numParts; l++)
 					{
-						XMLElement* elem6 = doc->NewElement("part");
+						XMLElement* elem6 = doc.NewElement("part");
 						elem6->SetAttribute("flags", vBoneParts[iCurItemData][l].flags);
 						elem6->SetAttribute("texId", vBoneParts[iCurItemData][l].texResId);
 						elem6->SetAttribute("normId", vBoneParts[iCurItemData][l].normalMapResId);
@@ -900,10 +900,10 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				//Add bone part tree
 				if(vBoneRecords[iCurItemData][k].numPartTreeVals)	//if there are any
 				{
-					elem5 = doc->NewElement("parttree");	//AND A PARTRIDGE IN A PART TREE
+					elem5 = doc.NewElement("parttree");	//AND A PARTRIDGE IN A PART TREE
 					for(int l = vBoneRecords[iCurItemData][k].firstPartTreeValIdx; l < vBoneRecords[iCurItemData][k].firstPartTreeValIdx + vBoneRecords[iCurItemData][k].numPartTreeVals; l++)
 					{
-						XMLElement* elem6 = doc->NewElement("value");
+						XMLElement* elem6 = doc.NewElement("value");
 						elem6->SetAttribute("val", vBonePartTreeValues[iCurItemData][l]);
 						elem5->InsertEndChild(elem6);
 					}
@@ -913,10 +913,10 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				//Add mapping regions
 				if(vBoneRecords[iCurItemData][k].numRgnCells)
 				{
-					elem5 = doc->NewElement("regions");
+					elem5 = doc.NewElement("regions");
 					for(int l = vBoneRecords[iCurItemData][k].firstRgnCellIdx; l < vBoneRecords[iCurItemData][k].firstRgnCellIdx + vBoneRecords[iCurItemData][k].numRgnCells; l++)
 					{
-						XMLElement* elem6 = doc->NewElement("regionmapping");
+						XMLElement* elem6 = doc.NewElement("regionmapping");
 						elem6->SetAttribute("uid", vGridCellMappings[iCurItemData][l].regionUID);
 						elem6->SetAttribute("index", vGridCellMappings[iCurItemData][l].burnGridCellIdx);						
 						elem5->InsertEndChild(elem6);
@@ -927,7 +927,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				//Add burn grid
 				if(vBoneRecords[iCurItemData][k].burnGridWidth && vBoneRecords[iCurItemData][k].burnGridHeight)
 				{
-					elem5 = doc->NewElement("burngrid");
+					elem5 = doc.NewElement("burngrid");
 					elem5->SetAttribute("firstpos", vBoneRecords[iCurItemData][k].firstBurnUsedIdx);
 					if(vBoneRecords[iCurItemData][k].burnGridSize != DEFAULT_BURNGRIDSIZE)
 						elem5->SetAttribute("size", vBoneRecords[iCurItemData][k].burnGridSize);
@@ -950,7 +950,7 @@ bool itemManifestToXML(const wchar_t* cFilename)
 				//	mOccurrences[att->Name()].push_back(att->Value());
 				
 				//Write matrix stuff
-				WriteTransforms(elem4, doc, vBoneRecords[iCurItemData][k].animBlockTransform);
+				WriteTransforms(elem4, &doc, vBoneRecords[iCurItemData][k].animBlockTransform);
 			}
 			
 			elem2->InsertEndChild(elem3);
@@ -960,22 +960,22 @@ bool itemManifestToXML(const wchar_t* cFilename)
 		for(int l = 0; l < vStringTableEntries[iCurItemData].size(); l++)
 		{
 			if(l == vItemDataHeaders[iCurItemData].itemIdStrId)
-				elem3 = doc->NewElement("id");
+				elem3 = doc.NewElement("id");
 			else if(l == vItemDataHeaders[iCurItemData].name.key)
 			{
-				elem3 = doc->NewElement("name");
+				elem3 = doc.NewElement("name");
 				elem3->SetAttribute("strid", vItemDataHeaders[iCurItemData].name.id);
 			}
 			else if(l == vItemDataHeaders[iCurItemData].desc.key)
 			{
-				elem3 = doc->NewElement("description");
+				elem3 = doc.NewElement("description");
 				elem3->SetAttribute("strid", vItemDataHeaders[iCurItemData].desc.id);
 			}
 			else
-				elem3 = doc->NewElement("text");
+				elem3 = doc.NewElement("text");
 			for(int m = vStringTableEntries[iCurItemData][l].pointerIndex; m < vStringTableEntries[iCurItemData][l].pointerIndex + vStringTableEntries[iCurItemData][l].pointerCount; m++)
 			{
-				XMLElement* elem6 = doc->NewElement("string");
+				XMLElement* elem6 = doc.NewElement("string");
 				elem6->SetAttribute("lang", ws2s(toLangString(vStringPointerEntries[iCurItemData][m].languageId)).c_str());
 				elem6->SetAttribute("data", &(vStrings[iCurItemData].data()[vStringPointerEntries[iCurItemData][m].offset]));
 				elem3->InsertEndChild(elem6);
@@ -992,10 +992,9 @@ bool itemManifestToXML(const wchar_t* cFilename)
 		#ifndef SPLIT_XML_FILES
 		root->InsertEndChild(elem);
 		#else
-		doc->InsertFirstChild(elem);
+		doc.InsertFirstChild(elem);
 		makeFolder(sXMLFilename);	//Create folders if they're not there, or next line will silently fail
-		doc->SaveFile(ws2s(sXMLFilename).c_str());
-		delete doc;
+		doc.SaveFile(ws2s(sXMLFilename).c_str());
 		#endif
 	}
 	
@@ -1004,13 +1003,12 @@ bool itemManifestToXML(const wchar_t* cFilename)
 	//onames.close();
 	//oHash.close();
 	#ifndef SPLIT_XML_FILES
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sFilename).c_str());
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sFilename).c_str());
 	delete doc;
 	#else
-	itemmanifest->InsertEndChild(itemroot);
-	itemmanifest->SaveFile(ws2s(sFilename).c_str());
-	delete itemmanifest;
+	itemmanifest.InsertEndChild(itemroot);
+	itemmanifest.SaveFile(ws2s(sFilename).c_str());
 	#endif
 	
 	//DEBUG: Save out all the data that we got in our map
@@ -1067,21 +1065,19 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 	//Open this XML file for parsing
 	wstring sXMLFile = cFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -1093,8 +1089,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(filename != NULL)
 			lItemManifestFilenames.push_back(s2ws(filename));
 	}
-	
-	delete doc;	//Done with this file
 	
 	//Now loop through our files, reading in the data from each
 	list<itemManifestRecord> lItemManifests;
@@ -1119,23 +1113,20 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 	
 	for(list<wstring>::iterator i = lItemManifestFilenames.begin(); i != lItemManifestFilenames.end(); i++)
 	{
-		doc = new XMLDocument;
-		int iErr = doc->LoadFile(ws2s(*i).c_str());
+		int iErr = doc.LoadFile(ws2s(*i).c_str());
 		if(iErr != XML_NO_ERROR)
 		{
 			cout << "Error parsing XML file " << ws2s(*i) << ": Error " << iErr << endl;
-			delete doc;
 			return false;
 		}
 		
-		root = doc->RootElement();
+		root = doc.RootElement();
 		
 		//Read in itemManifestRecord
 		itemManifestRecord imr;
 		if(root->QueryUnsignedAttribute("id", &imr.itemId) != XML_NO_ERROR)
 		{
 			cout << "Unable to read item ID from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		
@@ -1144,14 +1135,12 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem == NULL)
 		{
 			cout << "Unable to read item animresid from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		const char* cFilename = elem->Attribute("filename");
 		if(cFilename == NULL)
 		{
 			cout << "Unable to read item animresid filename from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		imr.animResId = getResID(s2ws(cFilename));
@@ -1167,14 +1156,12 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem == NULL)
 		{
 			cout << "Unable to read item coloritemicon from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		cFilename = elem->Attribute("filename");
 		if(cFilename == NULL)
 		{
 			cout << "Unable to read item coloritemicon filename from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		imr.catalogIconColorItemTexResId = getResID(s2ws(cFilename));
@@ -1184,14 +1171,12 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem == NULL)
 		{
 			cout << "Unable to read item colorbgicon from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		cFilename = elem->Attribute("filename");
 		if(cFilename == NULL)
 		{
 			cout << "Unable to read item colorbgicon filename from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		imr.catalogIconColorBGTexResId = getResID(s2ws(cFilename));
@@ -1201,14 +1186,12 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem == NULL)
 		{
 			cout << "Unable to read item greybgicon from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		cFilename = elem->Attribute("filename");
 		if(cFilename == NULL)
 		{
 			cout << "Unable to read item greybgicon filename from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		imr.catalogIconGreyBGTexResId = getResID(s2ws(cFilename));
@@ -1231,7 +1214,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cIDFilename == NULL)
 				{
 					cout << "Unable to read normal dependency filename from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				nd.normalTexResId = getResID(s2ws(cIDFilename));
@@ -1247,7 +1229,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cIDFilename == NULL)
 				{
 					cout << "Unable to read sound dependency filename from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				sd.soundResId = getResID(s2ws(cIDFilename));
@@ -1263,7 +1244,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cIDFilename == NULL)
 				{
 					cout << "Unable to read effect dependency filename from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				ed.effectResId = getResID(s2ws(cIDFilename));
@@ -1279,7 +1259,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cID == NULL)
 				{
 					cout << "Unable to read item dependency id from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				itd.itemResId = itemNameToID(cID);
@@ -1297,7 +1276,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem == NULL)
 		{
 			cout << "Unable to read itemdata from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		
@@ -1370,32 +1348,27 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(elem->QueryIntAttribute("costCoins", &idh.costCoins) != XML_NO_ERROR)
 		{
 			cout << "Unable to read coin cost from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		if(elem->QueryFloatAttribute("purchaseCooldown", &idh.purchaseCooldown) != XML_NO_ERROR)
 		{
 			cout << "Unable to read purchase cooldown from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		if(elem->QueryIntAttribute("shipTimeSec", &idh.shipTimeSec) != XML_NO_ERROR)
 		{
 			cout << "Unable to read shipping time from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		if(elem->QueryIntAttribute("valueCoins", &idh.valueCoins) != XML_NO_ERROR)
 		{
 			cout << "Unable to read coin value from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		const char* cVec = elem->Attribute("iconAnimBoundsMin");
 		if(cVec == NULL)
 		{
 			cout << "Unable to read iconAnimBoundsMin from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		idh.iconAnimBoundsMin = stringToVec2(cVec);
@@ -1403,7 +1376,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(cVec == NULL)
 		{
 			cout << "Unable to read iconAnimBoundsMax from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		idh.iconAnimBoundsMax = stringToVec2(cVec);
@@ -1479,19 +1451,16 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(skeletons->QueryUnsignedAttribute("burnExport", &sr.burnExport) != XML_NO_ERROR)
 			{
 				cout << "Unable to read skeleton burn export from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			if(skeletons->QueryFloatAttribute("selectWeight", &sr.selectWeight) != XML_NO_ERROR)
 			{
 				cout << "Unable to read skeleton selectWeight from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			if(skeletons->QueryIntAttribute("hasAnimThresh", &sr.hasAnimThresh) != XML_NO_ERROR)
 			{
 				cout << "Unable to read skeleton hasAnimThresh from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			//If has anim threshold set, query that as well
@@ -1500,7 +1469,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(skeletons->QueryFloatAttribute("animThresh", &sr.animThresh) != XML_NO_ERROR)
 				{
 					cout << "Skeleton's hasAnimThresh set to nonzero, but unable to read animThresh from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 			}
@@ -1509,7 +1477,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(skeletons->QueryIntAttribute("animExportStrId", &sr.animExportStrId) != XML_NO_ERROR)
 			{
 				cout << "Unable to read skeleton animExportStrId from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			
@@ -1517,7 +1484,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(cVec == NULL)
 			{
 				cout << "Unable to read animBoundsMin from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			sr.animBoundsMin = stringToVec2(cVec);
@@ -1525,7 +1491,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(cVec == NULL)
 			{
 				cout << "Unable to read animBoundsMax from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			sr.animBoundsMax = stringToVec2(cVec);
@@ -1538,75 +1503,63 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(joint->QueryIntAttribute("boneIdx1", &jr.boneIdx[0]) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint bone index 1 from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryIntAttribute("boneIdx2", &jr.boneIdx[1]) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint bone index 2 from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryIntAttribute("boneBurnGridCellIdx1", &jr.boneBurnGridCellIdx[0]) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint bone burn grid cell index 1 from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryIntAttribute("boneBurnGridCellIdx2", &jr.boneBurnGridCellIdx[1]) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint bone burn grid cell index 2 from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryIntAttribute("burnable", &jr.burnable) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint burnable from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryIntAttribute("allowExtDamage", &jr.allowExtDamage) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint allowExtDamage from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				cVec = joint->Attribute("modelSpacePos");
 				if(cVec == NULL)
 				{
 					cout << "Unable to read modelSpacePos from joint in XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				jr.modelSpacePos = stringToVec2(cVec);
 				if(joint->QueryFloatAttribute("strength", &jr.strength.value) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint strength from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryFloatAttribute("angleLimit", &jr.angleLimit.value) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint angleLimit from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryFloatAttribute("speed", &jr.speed.value) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint speed from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryFloatAttribute("spin", &jr.spin.value) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint spin from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(joint->QueryFloatAttribute("wobble", &jr.wobble.value) != XML_NO_ERROR)
 				{
 					cout << "Unable to read joint wobble from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}				
 				
@@ -1696,20 +1649,17 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(bone->QueryUnsignedAttribute("id", &br.id) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone id from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryIntAttribute("animBlockIdx", &br.animBlockIdx) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone animBlockIdx from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				cVec = bone->Attribute("itemSpacePosition");
 				if(cVec == NULL)
 				{
 					cout << "Unable to read bone itemSpacePosition in XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				br.itemSpacePosition = stringToVec2(cVec);
@@ -1717,7 +1667,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cVec == NULL)
 				{
 					cout << "Unable to read bone burnBoundsMin in XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				br.burnBoundsMin = stringToVec2(cVec);
@@ -1725,116 +1674,97 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(cVec == NULL)
 				{
 					cout << "Unable to read bone burnBoundsMax in XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				br.burnBoundsMax = stringToVec2(cVec);
 				if(bone->QueryUnsignedAttribute("igniteTimeEnumValId", &br.igniteTimeEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone igniteTimeEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("burnTimeEnumValId", &br.burnTimeEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone burnTimeEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("attackSpeedEnumValId", &br.attackSpeedEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone attackSpeedEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("attackAmountEnumValId", &br.attackAmountEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone attackAmountEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("decaySpeedEnumValId", &br.decaySpeedEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone decaySpeedEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("burnAmountEnumValId", &br.burnAmountEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone burnAmountEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("boneDensityEnumValId", &br.boneDensityEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone boneDensityEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("collideSoundEnumValId", &br.collideSoundEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone collideSoundEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("igniteSoundEnumValId", &br.igniteSoundEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone igniteSoundEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("frictionEnumValId", &br.frictionEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone frictionEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("restitutionEnumValId", &br.restitutionEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone restitutionEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("linearDampEnumValId", &br.linearDampEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone linearDampEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("angularDampEnumValId", &br.angularDampEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone angularDampEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("ashBreakMinAccelEnumValId", &br.ashBreakMinAccelEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone ashBreakMinAccelEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("ashBreakMaxAccelEnumValId", &br.ashBreakMaxAccelEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone ashBreakMaxAccelEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("stampBlackWhitePctEnumValId", &br.stampBlackWhitePctEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone stampBlackWhitePctEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("collideParticlesEnumValId", &br.collideParticlesEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone collideParticlesEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				if(bone->QueryUnsignedAttribute("mouseGrabSoundEnumValId", &br.mouseGrabSoundEnumValId) != XML_NO_ERROR)
 				{
 					cout << "Unable to read bone mouseGrabSoundEnumValId from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				
@@ -1849,7 +1779,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 					if(cType == NULL)
 					{
 						cout << "Error: Could not read bone shape type from XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					string sType = cType;
@@ -1863,7 +1792,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						if(center == NULL)
 						{
 							cout << "Error: Could not read circle center from XML file " << ws2s(*i) << endl;
-							delete doc; 
 							return false;
 						}
 						readVec2(center, "pos", &(bsr.verts[0]));
@@ -1871,13 +1799,11 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						if(radius == NULL)
 						{
 							cout << "Error: Could not read circle radius from XML file " << ws2s(*i) << endl;
-							delete doc; 
 							return false;
 						}
 						if((radius->QueryFloatAttribute("value", &(bsr.verts[1].x))) != XML_NO_ERROR)
 						{
 							cout << "Error: Could not read circle radius from XML file " << ws2s(*i) << ". Value malformed." << endl;
-							delete doc; 
 							return false;
 						}						
 					}
@@ -1892,7 +1818,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 							if(bsr.numVerts >= 8)
 							{
 								cout << "Error: polygon shapes cannot have more than 8 vertices. Culprit file: " << ws2s(*i) << endl;
-								delete doc;
 								return false;
 							}
 							readVec2(vert, "pos", &(bsr.verts[bsr.numVerts]));
@@ -1902,7 +1827,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 					else
 					{
 						cout << "Unrecognized bone shape type " << sType << " in XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					
@@ -1922,25 +1846,21 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						if(part->QueryUnsignedAttribute("flags", &bpr.flags) != XML_NO_ERROR)
 						{
 							cout << "Error: Unable to read bone part flags from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						if(part->QueryUnsignedAttribute("texId", &bpr.texResId) != XML_NO_ERROR)
 						{
 							cout << "Error: Unable to read bone part texId from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						if(part->QueryUnsignedAttribute("normId", &bpr.normalMapResId) != XML_NO_ERROR)
 						{
 							cout << "Error: Unable to read bone part normId from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						if(part->QueryFloatAttribute("pupilRange", &bpr.pupilMoveRange) != XML_NO_ERROR)
 						{
 							cout << "Error: Unable to read bone part pupilRange from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						br.numParts++;
@@ -1962,7 +1882,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						if(value->QueryIntAttribute("val", &val) != XML_NO_ERROR)
 						{
 							cout << "Error: Unable to read bone part tree value from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						lBonePartTreeValues.push_back(val);
@@ -1981,46 +1900,44 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 					if(burngrid->QueryIntAttribute("width", &br.burnGridWidth) != XML_NO_ERROR)
 					{
 						cout << "Error: Unable to read burngrid width from XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					if(burngrid->QueryIntAttribute("height", &br.burnGridHeight) != XML_NO_ERROR)
 					{
 						cout << "Error: Unable to read burngrid height from XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					if(burngrid->QueryIntAttribute("firstpos", &br.firstBurnUsedIdx) != XML_NO_ERROR)
 					{
 						cout << "Error: Unable to read burngrid firstpos from XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					const char* grid = burngrid->Attribute("grid");
 					if(grid == NULL)
 					{
 						cout << "Error: Unable to read burngrid grid from XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					if(strlen(grid) != br.burnGridWidth * br.burnGridHeight)	//Grid isn't correct size
 					{
 						cout << "Error: burngrid attribute \"grid\" is not of width*height length in XML file " << ws2s(*i) << endl;
-						delete doc;
 						return false;
 					}
 					for(int j = 0; j < br.burnGridWidth*br.burnGridHeight; j++)
 					{
 						if(grid[j] == '0')
+						{
 							lBurnGrid.push_back(0);
+						}
 						else
+						{
 							lBurnGrid.push_back(1);
 					}
+				}
 				}
 				else
 				{
 					cout << "Error: Unable to read bone burngrid from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				
@@ -2036,13 +1953,11 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						if(region->QueryIntAttribute("uid", &bgcmr.regionUID) != XML_NO_ERROR)
 						{	
 							cout << "Error: Unable to read bone regionmapping uid from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}
 						if(region->QueryIntAttribute("index", &bgcmr.burnGridCellIdx) != XML_NO_ERROR)
 						{	
 							cout << "Error: Unable to read bone regionmapping index from XML file " << ws2s(*i) << endl;
-							delete doc;
 							return false;
 						}						
 						br.numRgnCells++;
@@ -2060,7 +1975,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(transforms == NULL)
 				{
 					cout << "Error: Unable to read bone transforms from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				ReadTransforms(transforms, &br.animBlockTransform);
@@ -2096,7 +2010,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(id == NULL)
 		{
 			cout << "Unable to read item ID string from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* idstring = id->FirstChildElement("string"); idstring != NULL; idstring = idstring->NextSiblingElement("string"))
@@ -2106,7 +2019,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to read item ID string's language from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -2120,11 +2032,12 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(data == NULL)
 			{
 				cout << "Unable to read item ID string's data from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			for(int j = 0; j < strlen(data); j++)
+			{
 				lStrings.push_back(data[j]);
+			}
 			lStrings.push_back('\0');	//Be sure to append null character, as well
 		}
 		lStringEntries.push_back(idEntry);
@@ -2139,13 +2052,11 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(namestr == NULL)
 		{
 			cout << "Unable to read item name string from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		if(namestr->QueryUnsignedAttribute("strid", &idh.name.id) != XML_NO_ERROR)
 		{
 			cout << "Unable to read item name strid XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* namestring = namestr->FirstChildElement("string"); namestring != NULL; namestring = namestring->NextSiblingElement("string"))
@@ -2155,7 +2066,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to read item name string's language from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -2169,7 +2079,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(data == NULL)
 			{
 				cout << "Unable to read item name string's data from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			for(int j = 0; j < strlen(data); j++)
@@ -2188,13 +2097,11 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 		if(descstr == NULL)
 		{
 			cout << "Unable to read item description string from XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		if(descstr->QueryUnsignedAttribute("strid", &idh.desc.id) != XML_NO_ERROR)
 		{
 			cout << "Unable to read item description strid XML file " << ws2s(*i) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* descstring = descstr->FirstChildElement("string"); descstring != NULL; descstring = descstring->NextSiblingElement("string"))
@@ -2204,7 +2111,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to read item description string's language from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -2218,7 +2124,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			if(data == NULL)
 			{
 				cout << "Unable to read item description string's data from XML file " << ws2s(*i) << endl;
-				delete doc;
 				return false;
 			}
 			for(int j = 0; j < strlen(data); j++)
@@ -2241,7 +2146,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(lang == NULL)
 				{
 					cout << "Unable to read text string's language from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				spe.languageId = toLangID(s2ws(lang));
@@ -2255,7 +2159,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 				if(data == NULL)
 				{
 					cout << "Unable to read text string's data from XML file " << ws2s(*i) << endl;
-					delete doc;
 					return false;
 				}
 				for(int j = 0; j < strlen(data); j++)
@@ -2293,9 +2196,6 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 			
 		lItemData.push_back(idh);
 		lItemManifests.push_back(imr);
-		
-		//And we're done with this XML file
-		delete doc;
 	}
 	
 	//Write everything out to the itemmanifest file

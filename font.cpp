@@ -46,28 +46,27 @@ bool fontManifestToXML(wstring sFilename)
 	fclose(f);
 	
 	//Now output this to XML
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("fontmanifest");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("fontmanifest");
 	
 	for(list<fontManifestRecord>::iterator i = lFonts.begin(); i != lFonts.end(); i++)
 	{
-		XMLElement* elem = doc->NewElement("font");
+		XMLElement* elem = doc.NewElement("font");
 		elem->SetAttribute("filename", ws2s(getName(i->fontResId)).c_str());
 		for(int j = i->firstTexDependsIdx; j < i->firstTexDependsIdx + i->numTexDepends; j++)
 		{
-			XMLElement* elem2 = doc->NewElement("texture");
+			XMLElement* elem2 = doc.NewElement("texture");
 			elem2->SetAttribute("filename", ws2s(getName(vTextures[j].texResId)).c_str());
 			elem->InsertEndChild(elem2);
 		}
 		root->InsertEndChild(elem);
 	}
 	
-	doc->InsertFirstChild(root);
+	doc.InsertFirstChild(root);
 	wstring sXMLFilename = sFilename;
 	sXMLFilename += TEXT(".xml");
-	doc->SaveFile(ws2s(sXMLFilename).c_str());
-	
-	delete doc;
+	doc.SaveFile(ws2s(sXMLFilename).c_str());
+
 	return true;
 }
 
@@ -75,21 +74,19 @@ bool XMLToFontManifest(wstring sFilename)
 {
 	wstring sXMLFilename = sFilename;
 	sXMLFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFilename).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFilename).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFilename) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFilename) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -115,9 +112,7 @@ bool XMLToFontManifest(wstring sFilename)
 		}
 		lFonts.push_back(fmr);
 	}
-	
-	delete doc;	//Done with this
-	
+
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
 	if(f == NULL)
@@ -238,10 +233,10 @@ bool fontToXML(wstring sFilename)
 	fclose(f);
 	
 	//Now output this to XML
-	XMLDocument* doc = new XMLDocument;
-	//doc->SetBOM(true);
-	//doc->Parse("<\?xml version=\"1.0\" encoding=\"UTF-8\"\?>");
-	XMLElement* root = doc->NewElement("font");
+	XMLDocument doc;
+	//doc.SetBOM(true);
+	//doc.Parse("<\?xml version=\"1.0\" encoding=\"UTF-8\"\?>");
+	XMLElement* root = doc.NewElement("font");
 	root->SetAttribute("pointsize", frh.pointSize);
 	root->SetAttribute("extleading", frh.extLeading);
 	root->SetAttribute("maxascent", frh.maxAscent);
@@ -250,7 +245,7 @@ bool fontToXML(wstring sFilename)
 	//Write out our font characters
 	for(list<fontCharacterRecord>::iterator i = lFontChars.begin(); i != lFontChars.end(); i++)
 	{
-		XMLElement* elem = doc->NewElement("char");
+		XMLElement* elem = doc.NewElement("char");
 		elem->SetAttribute("value", getFontChar(i->codepoint).c_str());
 		elem->SetAttribute("texpage", i->texPageIdx);
 		elem->SetAttribute("texx", i->texX);
@@ -266,19 +261,18 @@ bool fontToXML(wstring sFilename)
 	//Write out our font kernings
 	for(list<fontKerningRecord>::iterator i = lFontKerns.begin(); i != lFontKerns.end(); i++)
 	{
-		XMLElement* elem = doc->NewElement("kerning");
+		XMLElement* elem = doc.NewElement("kerning");
 		elem->SetAttribute("char1", getFontChar(i->codepoints[0]).c_str());
 		elem->SetAttribute("char2", getFontChar(i->codepoints[1]).c_str());
 		elem->SetAttribute("amount", i->kernAmount);
 		root->InsertEndChild(elem);
 	}
 	
-	doc->InsertEndChild(root);
+	doc.InsertEndChild(root);
 	wstring sXMLFilename = sFilename;
 	//sXMLFilename += TEXT(".temp.xml"); //TODO Overwrite old file
-	doc->SaveFile(ws2s(sXMLFilename).c_str());
+	doc.SaveFile(ws2s(sXMLFilename).c_str());
 	
-	delete doc;
 	return true;
 }
 
@@ -330,22 +324,20 @@ bool compare_kerning(fontKerningRecord first, fontKerningRecord second)
 
 bool XMLToFont(wstring sFilename)
 {
-	XMLDocument* doc = new XMLDocument;
-	//doc->SetBOM(true);
-	int iErr = doc->LoadFile(ws2s(sFilename).c_str());
+	XMLDocument doc;
+	//doc.SetBOM(true);
+	int iErr = doc.LoadFile(ws2s(sFilename).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sFilename) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sFilename) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -409,8 +401,6 @@ bool XMLToFont(wstring sFilename)
 	//Sort our lists
 	lCharRecords.sort(compare_character);
 	lKerningRecords.sort(compare_kerning);
-	
-	delete doc;	//Done parsing
 	
 	//Open our output file
 	wstring sOut = sFilename;

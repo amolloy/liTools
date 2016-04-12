@@ -86,8 +86,8 @@ bool wordPackToXML(const wchar_t* cFilename)
 		stringList.push_back(c);
 		
 	//Save to XML
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("words");	//Create the root element
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("words");	//Create the root element
 	//root->SetAttribute("num", whHeaders.size());
 	
 	for(list<wordHeader>::iterator i = whHeaders.begin(); i != whHeaders.end(); i++)
@@ -95,19 +95,18 @@ bool wordPackToXML(const wchar_t* cFilename)
 		wchar_t* cData = stringList.data();
 		wstring sWord = &cData[stringPointerList[stringTableList[i->wordStrId].pointerIndex].offset];
 		
-		XMLElement* elem = doc->NewElement("word");
+		XMLElement* elem = doc.NewElement("word");
 		//elem->SetAttribute("id", i->wordStrId);
 		elem->SetAttribute("str", ws2s(sWord).c_str());
 		elem->SetAttribute("probability", i->probability);
 		root->InsertEndChild(elem);
 	}
 	
-	doc->InsertFirstChild(root);
+	doc.InsertFirstChild(root);
 	wstring sFilename = cFilename;
 	sFilename += TEXT(".xml");
-	doc->SaveFile(ws2s(sFilename).c_str());
+	doc.SaveFile(ws2s(sFilename).c_str());
 	
-	delete doc;
 	fclose(f);
 	
 	return true;
@@ -124,15 +123,15 @@ bool XMLToWordPack(const wchar_t* cFilename)
 	wstring sXMLFile = cFilename;
 	sXMLFile += TEXT(".xml");
 	
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		return false;
 	}
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Root element NULL in XML file " << ws2s(sXMLFile) << endl;
@@ -223,7 +222,6 @@ bool XMLToWordPack(const wchar_t* cFilename)
 	}
 	
 	fclose(f);
-	delete doc;
 	return true;
 }
 

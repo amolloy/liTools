@@ -95,20 +95,20 @@ bool sndManifestToXML(const wchar_t* cFilename)
 	fclose(f);
 	
 	//Done reading the file. Now parse it out to XML
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("soundmanifest");	//Create the root element
-	root->SetAttribute("numsounds", lSoundTakeGroups.size());
-	root->SetAttribute("numtakes", vSoundTakes.size());
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("soundmanifest");	//Create the root element
+	root->SetAttribute("numsounds", static_cast<unsigned int>(lSoundTakeGroups.size()));
+	root->SetAttribute("numtakes", static_cast<unsigned int>(vSoundTakes.size()));
 	
 	//ofstream ofile("soundmanifest_out.txt");
 	for(list<soundTakeGroup>::iterator i = lSoundTakeGroups.begin(); i != lSoundTakeGroups.end(); i++)
 	{
-		XMLElement* elem = doc->NewElement("sound");
+		XMLElement* elem = doc.NewElement("sound");
 		//elem->SetAttribute("id", i->logicalId);
 		//Now insert takes for this sound
 		for(int j = i->firstTakeIdx; j < i->firstTakeIdx + i->numTakes; j++)
 		{
-			XMLElement* elem2 = doc->NewElement("take");
+			XMLElement* elem2 = doc.NewElement("take");
 			wstring sFilename = getName(vSoundTakes[j].resId);
 			//Set the sound resource's ID to be correct
 			if(j == i->firstTakeIdx)
@@ -138,13 +138,11 @@ bool sndManifestToXML(const wchar_t* cFilename)
 	}
 	//ofile.close();
 	
-	doc->InsertFirstChild(root);
+	doc.InsertFirstChild(root);
 	wstring sFilename = cFilename;
 	sFilename += TEXT(".xml");
-	doc->SaveFile(ws2s(sFilename).c_str());
-	
-	delete doc;
-	
+	doc.SaveFile(ws2s(sFilename).c_str());
+
 	return true;
 }
 
@@ -153,20 +151,18 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 	wstring sXMLFile = cFilename;
 	sXMLFile += TEXT(".xml");
 	
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -182,7 +178,6 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 		if(id == NULL)
 		{
 			cout << "Error: Unable to get id of XML element in file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		stg.logicalId = getSoundId(s2ws(id).c_str());	//TODO: Hash this?
@@ -199,43 +194,36 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 			if(cName == NULL)
 			{
 				cout << "Error: Unable to get filename of take record in file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("channels", &tr.channels) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get channels from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("samplespersec", &tr.samplesPerSec) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get samplesPerSec from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("samplecountperchannel", &tr.sampleCountPerChannel) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get sampleCountPerChannel from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("vorbisworkingsetsizebytes", &tr.vorbisWorkingSetSizeBytes) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get vorbisWorkingSetSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("vorbismarkerssizebytes", &tr.vorbisMarkersSizeBytes) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get vorbisMarkersSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(elem2->QueryIntAttribute("vorbispacketssizebytes", &tr.vorbisPacketsSizeBytes) != XML_NO_ERROR)
 			{
 				cout << "Error: Unable to get vorbisPacketsSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			wstring sName = s2ws(cName);
@@ -249,7 +237,6 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 		lSoundTakeGroups.push_back(stg);	//Hang onto this
 		elem = elem->NextSiblingElement("sound");	//Next item
 	}
-	delete doc;	//We're done with this
 	
 	//Repack
 	FILE* f = _wfopen(cFilename, TEXT("wb"));	//Open file for writing

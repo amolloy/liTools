@@ -488,8 +488,8 @@ bool myPicturesToXML(wstring sFilename)
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("images");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("images");
 	
 	//Loop through for each image
 	int iCurImg = 0;
@@ -512,13 +512,13 @@ bool myPicturesToXML(wstring sFilename)
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
 		biOS = bTemp;
-		XMLElement* elem = doc->NewElement("image");
+		XMLElement* elem = doc.NewElement("image");
 		elem->SetAttribute("filename", ws2s(sName).c_str());
 		root->InsertEndChild(elem);
 	}
-	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sXMLFile).c_str());
+
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sXMLFile).c_str());
 	
 	return true;
 }
@@ -527,21 +527,19 @@ bool XMLToMyPictures(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: No root element in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -590,8 +588,6 @@ bool XMLToMyPictures(wstring sFilename)
 		unlink(ws2s(sTempFile).c_str());	//Delete our .png.temp file
 		lMetadata.push_back(mpm);
 	}
-	
-	delete doc;	//Done with this
 	
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
@@ -672,8 +668,8 @@ bool smokeImageToXML(wstring sFilename)
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("images");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("images");
 	
 	//Loop through for each image
 	int iCurImg = 0;
@@ -706,14 +702,14 @@ bool smokeImageToXML(wstring sFilename)
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
 		biOS = bTemp;
-		XMLElement* elem = doc->NewElement("image");
+		XMLElement* elem = doc.NewElement("image");
 		elem->SetAttribute("filename", ws2s(sName).c_str());
 		elem->SetAttribute("id", i->id);
 		root->InsertEndChild(elem);
 	}
-	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sXMLFile).c_str());
+
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sXMLFile).c_str());
 	
 	return true;
 }
@@ -722,21 +718,19 @@ bool XMLToSmokeImage(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: No root element in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -788,9 +782,7 @@ bool XMLToSmokeImage(wstring sFilename)
 		unlink(ws2s(sTempFile).c_str());	//Delete our .png.temp file
 		lMetadata.push_back(sim);
 	}
-	
-	delete doc;	//Done with this
-	
+
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
 	if(f == NULL)
@@ -872,8 +864,8 @@ bool fluidPalettesToXML(wstring sFilename)
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("images");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("images");
 	
 	//Loop through for each image
 	int iCurImg = 0;
@@ -896,14 +888,14 @@ bool fluidPalettesToXML(wstring sFilename)
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
 		biOS = bTemp;
-		XMLElement* elem = doc->NewElement("image");
+		XMLElement* elem = doc.NewElement("image");
 		elem->SetAttribute("filename", ws2s(sName).c_str());
 		elem->SetAttribute("id", i->id);		
 		root->InsertEndChild(elem);
 	}
-	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sXMLFile).c_str());
+
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sXMLFile).c_str());
 	
 	return true;
 }
@@ -912,21 +904,19 @@ bool XMLToFluidPalettes(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: No root element in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -976,8 +966,6 @@ bool XMLToFluidPalettes(wstring sFilename)
 		unlink(ws2s(sTempFile).c_str());	//Delete our .png.temp file
 		lMetadata.push_back(fpm);
 	}
-	
-	delete doc;	//Done with this
 	
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));

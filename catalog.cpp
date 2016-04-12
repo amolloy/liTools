@@ -106,12 +106,12 @@ bool catalogToXML(wstring sFilename)
 	
 	//Write out to XML
 	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("catalogs");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("catalogs");
 	
 	for(list<catalog>::iterator i = lCatalogs.begin(); i != lCatalogs.end(); i++)
 	{
-		XMLElement* catalog = doc->NewElement("catalog");
+		XMLElement* catalog = doc.NewElement("catalog");
 		catalog->SetAttribute("id", i->id);
 		catalog->SetAttribute("cost", i->cost);
 		catalog->SetAttribute("numCombos", i->numCombos);
@@ -128,20 +128,20 @@ bool catalogToXML(wstring sFilename)
 		catalog->SetAttribute("lockedTexId", ws2s(getName(i->lockedTexId)).c_str());
 		
 		//Write children items
-		XMLElement* items = doc->NewElement("items");
+		XMLElement* items = doc.NewElement("items");
 		for(int j = i->firstItemIdx; j < i->firstItemIdx + i->numItems; j++)
 		{
-			XMLElement* item = doc->NewElement("item");
+			XMLElement* item = doc.NewElement("item");
 			item->SetAttribute("name", itemIDToName(vItems[j]).c_str());	//TODO Support new items
 			items->InsertEndChild(item);
 		}
 		catalog->InsertEndChild(items);
 		
 		//Write name
-		XMLElement* name = doc->NewElement("name");
+		XMLElement* name = doc.NewElement("name");
 		for(int m = vStringTableList[i->nameStrId].pointerIndex; m < vStringTableList[i->nameStrId].pointerIndex + vStringTableList[i->nameStrId].pointerCount; m++)
 		{
-			XMLElement* string = doc->NewElement("string");
+			XMLElement* string = doc.NewElement("string");
 			string->SetAttribute("lang", ws2s(toLangString(vStringPointerList[m].languageId)).c_str());
 			string->SetAttribute("data", &(vStringList.data()[vStringPointerList[m].offset]));
 			name->InsertEndChild(string);
@@ -150,10 +150,9 @@ bool catalogToXML(wstring sFilename)
 		root->InsertEndChild(catalog);
 	}
 	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sFilename).c_str());
-	delete doc;
-	
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sFilename).c_str());
+
 	return true;
 }
 
@@ -162,21 +161,19 @@ bool XMLToCatalog(wstring sFilename)
 	//Open file
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -195,26 +192,22 @@ bool XMLToCatalog(wstring sFilename)
 		if(catalogelem->QueryUnsignedAttribute("id", &clog.id) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read catalog id from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(catalogelem->QueryIntAttribute("cost", &clog.cost) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read catalog cost from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(catalogelem->QueryIntAttribute("numCombos", &clog.numCombos) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read catalog numCombos from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		const char* bgRays = catalogelem->Attribute("bgRaysRGB");
 		if(bgRays == NULL)
 		{
 			cout << "Error: Unable to read catalog background ray color from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		RGBFromString(&clog.bgRaysR.value, &clog.bgRaysG.value, &clog.bgRaysB.value, bgRays);
@@ -222,7 +215,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(bgRays == NULL)
 		{
 			cout << "Error: Unable to read catalog background paper color from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		RGBFromString(&clog.bgPaperR.value, &clog.bgPaperG.value, &clog.bgPaperB.value, bgPaper);
@@ -230,7 +222,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(cover == NULL)
 		{
 			cout << "Error: Unable to read catalog coverTexId from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		clog.coverTexId = getResID(s2ws(cover));
@@ -238,7 +229,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(thumb == NULL)
 		{
 			cout << "Error: Unable to read catalog thumbTexId from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		clog.thumbTexId = getResID(s2ws(thumb));
@@ -246,7 +236,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(locked == NULL)
 		{
 			cout << "Error: Unable to read catalog lockedTexId from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		clog.lockedTexId = getResID(s2ws(locked));
@@ -260,7 +249,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(namestr == NULL)
 		{
 			cout << "Error reading catalog name string from file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* namestring = namestr->FirstChildElement("string"); namestring != NULL; namestring = namestring->NextSiblingElement("string"))
@@ -270,7 +258,6 @@ bool XMLToCatalog(wstring sFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to read catalog id string's language from XML file " <<  ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -283,7 +270,6 @@ bool XMLToCatalog(wstring sFilename)
 			if(data == NULL)
 			{
 				cout << "Unable to read catalog id string's data from XML file " <<  ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			for(int j = 0; j < strlen(data); j++)
@@ -297,7 +283,6 @@ bool XMLToCatalog(wstring sFilename)
 		if(items == NULL)
 		{
 			cout << "Error reading catalog items from file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* item = items->FirstChildElement("item"); item != NULL; item = item->NextSiblingElement("item"))
@@ -308,7 +293,6 @@ bool XMLToCatalog(wstring sFilename)
 			if(itemname == NULL)
 			{
 				cout << "Error reading catalog item name from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			it = itemNameToID(itemname);
@@ -320,7 +304,6 @@ bool XMLToCatalog(wstring sFilename)
 	}
 	
 	//Done reading XML
-	delete doc;
 	
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));

@@ -53,18 +53,18 @@ bool LoctexManifestToXML(wstring sFilename)
 	
 	//Now, open up the XML file and put all the data into it
 	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("loctexmanifest");	//Create the root element
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("loctexmanifest");	//Create the root element
 	
 	//Write out files
 	for(list<loctexFile>::iterator i = lFiles.begin(); i != lFiles.end(); i++)
 	{
-		XMLElement* elem = doc->NewElement("file");
+		XMLElement* elem = doc.NewElement("file");
 		elem->SetAttribute("filename", ws2s(getName(i->resId)).c_str());
 		//Write out records for this file
 		for(int j = i->index; j < i->index + i->count; j++)
 		{
-			XMLElement* elem2 = doc->NewElement("record");
+			XMLElement* elem2 = doc.NewElement("record");
 			//elem2->SetAttribute("langid", vRecords[j].languageId);
 			elem2->SetAttribute("lang", ws2s(toLangString(vRecords[j].languageId)).c_str());
 			elem2->SetAttribute("langfilename", ws2s(getName(vRecords[j].localizedResId)).c_str());
@@ -73,8 +73,8 @@ bool LoctexManifestToXML(wstring sFilename)
 		root->InsertEndChild(elem);
 	}
 	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sFilename).c_str());
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sFilename).c_str());
 	
 	return true;
 }
@@ -84,21 +84,19 @@ bool XMLToLoctexManifest(wstring sFilename)
 	//Open this XML file for parsing
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: No root element in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -131,8 +129,6 @@ bool XMLToLoctexManifest(wstring sFilename)
 		if(lf.count)
 			lFiles.push_back(lf);
 	}
-	
-	delete doc;	//Done with this
 	
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));

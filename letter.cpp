@@ -161,12 +161,12 @@ bool letterToXML(wstring sFilename)
 	
 	//Write out to XML
 	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("letters");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("letters");
 	
 	for(list<letter>::iterator i = lLetters.begin(); i != lLetters.end(); i++)
 	{
-		XMLElement* letter = doc->NewElement("letter");
+		XMLElement* letter = doc.NewElement("letter");
 		
 		//TODO: Letter defaults
 		
@@ -198,7 +198,6 @@ bool letterToXML(wstring sFilename)
 			
 			default:
 				cout << "Unknown letter type: " << i->type << endl;
-				delete doc;
 				return false;
 		}
 		
@@ -250,12 +249,12 @@ bool letterToXML(wstring sFilename)
 		//Requested items is an array; make it a child element
 		if(i->requestedItemId[0] || i->requestedItemId[1] || i->requestedItemId[2])
 		{
-			XMLElement* requestedItems = doc->NewElement("requested");
+			XMLElement* requestedItems = doc.NewElement("requested");
 			for(int j = 0; j < 3; j++)
 			{
 				if(i->requestedItemId[j])
 				{
-					XMLElement* item = doc->NewElement("item");
+					XMLElement* item = doc.NewElement("item");
 					item->SetAttribute("id", itemIDToName(i->requestedItemId[j]).c_str());	//TODO: Support new items
 					requestedItems->InsertEndChild(item);
 				}
@@ -264,10 +263,10 @@ bool letterToXML(wstring sFilename)
 		}
 		
 		//letterIdStrId is a string; handle differently
-		XMLElement* name = doc->NewElement("name");
+		XMLElement* name = doc.NewElement("name");
 		for(int j = vStringTableList[i->letterIdStrId].pointerIndex; j < vStringTableList[i->letterIdStrId].pointerIndex + vStringTableList[i->letterIdStrId].pointerCount; j++)
 		{
-			XMLElement* string = doc->NewElement("string");
+			XMLElement* string = doc.NewElement("string");
 			string->SetAttribute("lang", ws2s(toLangString(vStringPointerList[j].languageId)).c_str());
 			string->SetAttribute("data", &(vStringList.data()[vStringPointerList[j].offset]));
 			name->InsertEndChild(string);
@@ -275,10 +274,10 @@ bool letterToXML(wstring sFilename)
 		letter->InsertFirstChild(name);
 		
 		//Insert pages
-		XMLElement* pages = doc->NewElement("pages");
+		XMLElement* pages = doc.NewElement("pages");
 		for(int j = i->firstPageIdx; j < i->firstPageIdx + i->numPages; j++)
 		{
-			XMLElement* page = doc->NewElement("page");
+			XMLElement* page = doc.NewElement("page");
 			
 			//Add page element, taking defaults into account
 			if(vPages[j].allowSkip != DEFAULT_ALLOWSKIP)
@@ -303,11 +302,11 @@ bool letterToXML(wstring sFilename)
 			page->SetAttribute("wordsSoundResId", vPages[j].wordsSoundResId);	//TODO: Not a resource ID. What is this?
 			
 			//Add page text
-			XMLElement* text = doc->NewElement("text");
+			XMLElement* text = doc.NewElement("text");
 			text->SetAttribute("strid", vPages[j].text.id);
 			for(int k = vStringTableList[vPages[j].text.key].pointerIndex; k < vStringTableList[vPages[j].text.key].pointerIndex + vStringTableList[vPages[j].text.key].pointerCount; k++)
 			{
-				XMLElement* string = doc->NewElement("string");
+				XMLElement* string = doc.NewElement("string");
 				string->SetAttribute("lang", ws2s(toLangString(vStringPointerList[k].languageId)).c_str());
 				string->SetAttribute("data", &(vStringList.data()[vStringPointerList[k].offset]));
 				text->InsertEndChild(string);
@@ -328,10 +327,9 @@ bool letterToXML(wstring sFilename)
 		root->InsertEndChild(letter);
 	}
 	
-	doc->InsertFirstChild(root);
-	doc->SaveFile(ws2s(sFilename).c_str());
-	delete doc;
-	
+	doc.InsertFirstChild(root);
+	doc.SaveFile(ws2s(sFilename).c_str());
+
 	//DEBUG: Find most common ocurrences
 	/*ofstream ofile("map2.txt");
 	ofstream ofMap("map.txt");
@@ -385,21 +383,19 @@ bool XMLToLetter(wstring sFilename)
 	//Open file
 	wstring sXMLFile = sFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -438,31 +434,26 @@ bool XMLToLetter(wstring sFilename)
 		if(letterelem->QueryUnsignedAttribute("depCatalogId", &l.depCatalogId) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read letter depCatalogId from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(letterelem->QueryIntAttribute("depCatalogItemCount", &l.depCatalogItemCount) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read letter depCatalogItemCount from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(letterelem->QueryIntAttribute("delayTimeSec", &l.delayTimeSec) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read letter delayTimeSec from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(letterelem->QueryUnsignedAttribute("borderAnimExportId", &l.borderAnimExportId) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read letter borderAnimExportId from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		if(letterelem->QueryUnsignedAttribute("id", &l.id) != XML_NO_ERROR)
 		{
 			cout << "Error: Unable to read letter id from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		
@@ -486,7 +477,6 @@ bool XMLToLetter(wstring sFilename)
 			else
 			{
 				cout << "Error: unknown letter type: " << s << " in file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 		}
@@ -529,7 +519,6 @@ bool XMLToLetter(wstring sFilename)
 				if(cID == NULL)
 				{
 					cout << "Error reading requested item ID from file " << ws2s(sXMLFile) << endl;
-					delete doc;
 					return false;
 				}
 				l.requestedItemId[iTotalItems-1] = itemNameToID(cID);
@@ -545,7 +534,6 @@ bool XMLToLetter(wstring sFilename)
 		if(namestr == NULL)
 		{
 			cout << "Error reading letter name string from file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* namestring = namestr->FirstChildElement("string"); namestring != NULL; namestring = namestring->NextSiblingElement("string"))
@@ -555,7 +543,6 @@ bool XMLToLetter(wstring sFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to read letter id string's language from XML file " <<  ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -568,7 +555,6 @@ bool XMLToLetter(wstring sFilename)
 			if(data == NULL)
 			{
 				cout << "Unable to read letter id string's data from XML file " <<  ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			for(int j = 0; j < strlen(data); j++)
@@ -584,7 +570,6 @@ bool XMLToLetter(wstring sFilename)
 		if(pages == NULL)
 		{
 			cout << "Error reading letter pages from file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		for(XMLElement* page = pages->FirstChildElement("page"); page != NULL; page = page->NextSiblingElement("page"))
@@ -606,7 +591,6 @@ bool XMLToLetter(wstring sFilename)
 			if(page->QueryUnsignedAttribute("wordsSoundResId", &lp.wordsSoundResId) != XML_NO_ERROR)
 			{
 				cout << "Error reading page wordsSoundResId from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			
@@ -633,13 +617,11 @@ bool XMLToLetter(wstring sFilename)
 			if(textstr == NULL)
 			{
 				cout << "Error reading page text string from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			if(textstr->QueryUnsignedAttribute("strid", &lp.text.id) != XML_NO_ERROR)
 			{
 				cout << "Error reading page text string's strid from file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			for(XMLElement* namestring = textstr->FirstChildElement("string"); namestring != NULL; namestring = namestring->NextSiblingElement("string"))
@@ -649,7 +631,6 @@ bool XMLToLetter(wstring sFilename)
 				if(lang == NULL)
 				{
 					cout << "Unable to read page text string's language from XML file " <<  ws2s(sXMLFile) << endl;
-					delete doc;
 					return false;
 				}
 				spe.languageId = toLangID(s2ws(lang));
@@ -662,7 +643,6 @@ bool XMLToLetter(wstring sFilename)
 				if(data == NULL)
 				{
 					cout << "Unable to read page text string's data from XML file " <<  ws2s(sXMLFile) << endl;
-					delete doc;
 					return false;
 				}
 				for(int j = 0; j < strlen(data); j++)
@@ -679,9 +659,7 @@ bool XMLToLetter(wstring sFilename)
 		lLetters.push_back(l);
 		
 	}
-	//Done with XML file
-	delete doc;
-	
+
 	//Open our output file
 	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
 	if(f == NULL)

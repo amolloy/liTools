@@ -1,7 +1,16 @@
 #include "pakDataTypes.h"
 #include "residmap.h"
+#include <locale>
+#include <codecvt>
 
 //#define RESIDMAP_FILENAME	"vdata/residmap.dat.xml"
+
+#if 1
+FILE* _wfopen(const wchar_t* filename, const wchar_t* mode)
+{
+	return fopen(ws2s(filename).c_str(), ws2s(mode).c_str());
+}
+#endif
 
 map<wstring, u32> g_repakMappings;
 map<u32, wstring> g_pakMappings;
@@ -22,7 +31,7 @@ u32 getKnownResID(wstring sName)
 u32 getResID(wstring sName)
 {
 	if(!g_repakMappings.count(sName))
-		return hash(sName);
+		return filenameHash(sName);
 	return g_repakMappings[sName];
 }
 
@@ -47,22 +56,12 @@ void initResMap()
 //Functions from Stack Overflow peoples
 wstring s2ws(const string& s)
 {
-    int len;
-    int slength = (int)s.length();
-    len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0); 
-    wstring r(len, L'\0');
-    MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
-    return r;
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(s.c_str());
 }
 
 string ws2s(const wstring& s)
 {
-    int len;
-    int slength = (int)s.length();
-    len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0); 
-    string r(len, '\0');
-    WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, &r[0], len, 0, 0); 
-    return r;
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(s);
 }
 
 //convert a string to lowercase. Also change forward slashes back to backslashes.
@@ -113,7 +112,7 @@ u32 LIHash( const wchar_t *pCaseInsensitiveStr )
 }
 
 //Have to do some converting to get from std::wstring to wchar_t*
-u32 hash(wstring sFilename)
+u32 filenameHash(wstring sFilename)
 {
 	//Convert to lowercase first
 	return LIHash(stolower(sFilename).c_str());
@@ -123,7 +122,7 @@ u32 hash(wstring sFilename)
 bool parseResidMap(const wchar_t* cFilename)
 {
 	//Read in the mappings directly from residmap.dat
-	FILE* fp = _wfopen(cFilename, TEXT("rb"));
+	FILE* fp = _wfopen(cFilename, L"rb");
 	if(fp == NULL)
 	{
 		cout << "Error: Unable to open file " << ws2s(cFilename) << endl;
@@ -240,22 +239,21 @@ bool residMapToXML(const wchar_t* cFilename)
 	
 	//Now save this out to XML
 	wstring sFilename = cFilename;
-	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sFilename).c_str());
+	sFilename += L".xml";
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sFilename).c_str());
 	XMLElement* root;
 	map<u32,wstring> mCurXMLMappings;
 	if(iErr != XML_NO_ERROR)
 	{
 		// residmap.xml isn't here or is malformed; overwrite
-		delete doc;
-		doc = new XMLDocument;
-		root = doc->NewElement("mappings");	//Create the root element
-		doc->InsertFirstChild(root);
+		doc.Clear();
+		root = doc.NewElement("mappings");	//Create the root element
+		doc.InsertFirstChild(root);
 	}
 	else
 	{
-		root = doc->RootElement();	//Get the root element
+		root = doc.RootElement();	//Get the root element
 		//Parse all elements in the XML and populate our map
 		for(XMLElement* elem = root->FirstChildElement(); elem != NULL; elem = elem->NextSiblingElement())
 		{
@@ -275,20 +273,18 @@ bool residMapToXML(const wchar_t* cFilename)
 			if(mCurXMLMappings[i->first] != i->second)
 			{
 				cout << "Error: Conflict in IDs in residMapToXML(). Abort." << endl;
-				delete doc;
 				return false;
 			}
 			continue;
 		}
-		XMLElement* elem = doc->NewElement("mapping");
+		XMLElement* elem = doc.NewElement("mapping");
 		elem->SetAttribute("id", i->first);
 		elem->SetAttribute("filename", ws2s(i->second).c_str());
 		root->InsertEndChild(elem);
 	}
 	
 	//Done
-	doc->SaveFile(ws2s(sFilename).c_str());
-	delete doc;
+	doc.SaveFile(ws2s(sFilename).c_str());
 	//ofile << endl << iTotal << endl;
 	//ofile.close();
 	return true;
@@ -299,22 +295,20 @@ bool XMLToResidMap(const wchar_t* cFilename)
 {
 	//Open file
 	wstring sXMLFile = cFilename;
-	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	sXMLFile += L".xml";
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -329,14 +323,12 @@ bool XMLToResidMap(const wchar_t* cFilename)
 		if(elem->QueryIntAttribute("id", &id) != XML_NO_ERROR)
 		{
 			cout << "Unable to get mapping ID from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		const char* cName = elem->Attribute("filename");
 		if(cName == NULL)
 		{
 			cout << "Unable to get mapping filename from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		//Make mapping header that maps this resource ID to the wstring ID
@@ -360,10 +352,9 @@ bool XMLToResidMap(const wchar_t* cFilename)
 		for(unsigned int i = 0; i < iStrLen; i++)
 			lUTFData.push_back(cFile[i]);			//Copy data over
 	}
-	delete doc;	//Done reading XML
 	
 	//Open our output file
-	FILE* f = _wfopen(cFilename, TEXT("wb"));
+	FILE* f = _wfopen(cFilename, L"wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(cFilename) << endl;

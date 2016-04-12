@@ -148,12 +148,12 @@ bool comboDBToXML(const wchar_t* cFilename)
 	//Write out to XML
 	wstring sFilename = cFilename;
 	sFilename += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	XMLElement* root = doc->NewElement("combos");
+	XMLDocument doc;
+	XMLElement* root = doc.NewElement("combos");
 	
 	for(int i = 0; i != vCombos.size(); i++)
 	{
-		XMLElement* elem = doc->NewElement("combo");
+		XMLElement* elem = doc.NewElement("combo");
 		elem->SetAttribute("id", vCombos[i].id);	//TODO: What for???
 		elem->SetAttribute("coinvalue", vCombos[i].value);
 		elem->SetAttribute("stampvalue", vCombos[i].stampValue);
@@ -162,12 +162,12 @@ bool comboDBToXML(const wchar_t* cFilename)
 #endif
 		
 		//Write combo name
-		XMLElement* elem2 = doc->NewElement("name");
+		XMLElement* elem2 = doc.NewElement("name");
 		elem2->SetAttribute("strid", vCombos[i].title.id);	//TODO: What for???
 		//elem2->SetAttribute("stringkey", vCombos[i].title.key);
 		for(int j = vStringTableList[vCombos[i].title.key].pointerIndex; j < vStringTableList[vCombos[i].title.key].pointerIndex + vStringTableList[vCombos[i].title.key].pointerCount; j++)
 		{
-			XMLElement* elem3 = doc->NewElement("string");
+			XMLElement* elem3 = doc.NewElement("string");
 			elem3->SetAttribute("lang", ws2s(toLangString(vStringPointerList[j].languageId)).c_str());
 			elem3->SetAttribute("data", &(vStringList.data()[vStringPointerList[j].offset]));
 			elem2->InsertEndChild(elem3);
@@ -177,10 +177,10 @@ bool comboDBToXML(const wchar_t* cFilename)
 		//Write items in this combo
 		if(vCombos[i].numItems > 0)
 		{
-			XMLElement* elem3 = doc->NewElement("items");
+			XMLElement* elem3 = doc.NewElement("items");
 			for(int j = vCombos[i].firstItemIdx; j < vCombos[i].firstItemIdx + vCombos[i].numItems; j++)
 			{
-				XMLElement* elem4 = doc->NewElement("item");
+				XMLElement* elem4 = doc.NewElement("item");
 				//elem4->SetAttribute("id", vComboItems[j].itemId);
 				elem4->SetAttribute("name", itemIDToName(vComboItems[j].itemId).c_str());
 				ostringstream oss;
@@ -199,10 +199,10 @@ bool comboDBToXML(const wchar_t* cFilename)
 		}
 		root->InsertEndChild(elem);
 	}
-	doc->InsertFirstChild(root);
+	doc.InsertFirstChild(root);
 	
-	doc->SaveFile(ws2s(sFilename).c_str());
-	delete doc;
+	doc.SaveFile(ws2s(sFilename).c_str());
+
 	return true;
 }
 
@@ -211,21 +211,19 @@ bool XMLToComboDB(const wchar_t* cFilename)
 	//Open file
 	wstring sXMLFile = cFilename;
 	sXMLFile += TEXT(".xml");
-	XMLDocument* doc = new XMLDocument;
-	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
+	XMLDocument doc;
+	int iErr = doc.LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
-		delete doc;
 		return false;
 	}
 	
 	//Grab root element
-	XMLElement* root = doc->RootElement();
+	XMLElement* root = doc.RootElement();
 	if(root == NULL)
 	{
 		cout << "Error: Root element NULL in XML file " << ws2s(sXMLFile) << endl;
-		delete doc;
 		return false;
 	}
 	
@@ -242,28 +240,24 @@ bool XMLToComboDB(const wchar_t* cFilename)
 		if(elem->QueryIntAttribute("id", &id) != XML_NO_ERROR)
 		{
 			cout << "Unable to get combo ID from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		int coinval;
 		if(elem->QueryIntAttribute("coinvalue", &coinval) != XML_NO_ERROR)
 		{
 			cout << "Unable to get coin value from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		int stampval;
 		if(elem->QueryIntAttribute("stampvalue", &stampval) != XML_NO_ERROR)
 		{
 			cout << "Unable to get stamp value from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 #ifdef VERSION_12
 		if(elem->QueryIntAttribute("stridx", &cr.idStrTblIdx) != XML_NO_ERROR)
 		{
 			cout << "Unable to get idStrTblIdx from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 #endif
@@ -279,7 +273,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 		if(elem2->QueryUnsignedAttribute("strid", &cr.title.id) != XML_NO_ERROR)
 		{
 			cout << "Unable to get string id from XML file " << ws2s(sXMLFile) << endl;
-			delete doc;
 			return false;
 		}
 		
@@ -296,7 +289,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 			if(lang == NULL)
 			{
 				cout << "Unable to get string language from XML file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			spe.languageId = toLangID(s2ws(lang));
@@ -307,7 +299,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 			if(cString == NULL)
 			{
 				cout << "Unable to get string data from XML file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			
@@ -331,7 +322,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 			if(cName == NULL)
 			{
 				cout << "Unable to get item name from XML file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			cir.itemId = itemNameToID(cName);
@@ -341,7 +331,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 			if(cPos == NULL)
 			{
 				cout << "Unable to get item texpos from XML file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			istringstream iss(cPos);
@@ -352,7 +341,6 @@ bool XMLToComboDB(const wchar_t* cFilename)
 			if(cPos == NULL)
 			{
 				cout << "Unable to get item texsize from XML file " << ws2s(sXMLFile) << endl;
-				delete doc;
 				return false;
 			}
 			istringstream iss2(cSize);
@@ -363,8 +351,7 @@ bool XMLToComboDB(const wchar_t* cFilename)
 		}
 		lComboRecords.push_back(cr);
 	}
-	delete doc;	//Done reading XML
-	
+
 	//Open our output file
 	FILE* f = _wfopen(cFilename, TEXT("wb"));
 	if(f == NULL)
