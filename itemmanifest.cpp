@@ -276,7 +276,6 @@ bool itemManifestToXML(const wchar_t* cFilename)
 	vector< vector<StringPointerEntry> > vStringPointerEntries;
 	vector< vector<char> > vStrings;
 	vector< vector<byte> > vBurnGrid;
-	int iCurrentItemData = 0;
 	for(list<itemManifestRecord>::iterator i = lManifestRecords.begin(); i != lManifestRecords.end(); i++)
 	{
 		fseek(f, imh.itemsBinDataBytes.offset + i->binDataOffsetBytes, SEEK_SET);	//Seek to this position to read
@@ -1932,8 +1931,8 @@ bool XMLToItemManifest(const wchar_t* cFilename)
 						else
 						{
 							lBurnGrid.push_back(1);
+						}
 					}
-				}
 				}
 				else
 				{
