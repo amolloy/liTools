@@ -239,7 +239,7 @@ public:
 		}
 		else if (newXValid || newYValid)
 		{
-			if (!newYValid || newXValid && abs(angleX) <= abs(angleY))
+			if ((!newYValid || newXValid) && abs(angleX) <= abs(angleY))
 			{
 				Vector newXUnit = newX / scaleX;
 				double xUnitDouble = newY * newXUnit;
