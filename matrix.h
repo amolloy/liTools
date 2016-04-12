@@ -67,10 +67,10 @@ public:
 		return v;
 	}
 	
-	Vector operator =(const Vector& v)
+	Vector operator =(const Vector& v2)
 	{
-		X = v.X;
-		Y = v.Y;
+		Vector v(v2.X, v2.Y);
+		return v;
 	}
 	
 	Vector operator *(double value)
@@ -92,6 +92,7 @@ public:
 	Vector operator /(double value)
 	{
 		Vector v(X / value, Y / value);
+		return v;
 	}
 
 	double LengthSquared()
@@ -156,6 +157,7 @@ public:
 		_21 = m._21;
 		_22 = m._22;
 		_23 = m._23;
+		return *this;
 	}
 	
 	Matrix RotateTransform(double theta)

@@ -32,6 +32,7 @@ bool ios_convertToPNG(const wchar_t* cFilename, uint8_t* data, u32 size)
 	//Write first 12 bytes
 	fwrite(data, 1, sizeof(ImageHeader), output);
 	fclose(output);
+	return true;
 }
 
 //Save a PNG file from decompressed data
