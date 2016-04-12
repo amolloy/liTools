@@ -717,7 +717,7 @@ bool XMLToResidMap(const wchar_t* cFilename);				//Convert residmap.dat.xml back
 const wchar_t* getName(u32 resId);							//Get a resource filename from the resource ID
 u32 getResID(wstring sName);								//Get a resource ID from its filename (by lookup table or by hashing if unknown)
 u32 getKnownResID(wstring sName);							//Same as above, only returns 0 if unknown rather than hashing
-u32 hash(wstring sFilename);								//Hash a filename to get an ID
+u32 filenameHash(wstring sFilename);								//Hash a filename to get an ID
 wstring toBackslashes(const wstring s);						//Convert forward slashes in a filename to backslashes
 //zpipe.cpp functions
 uint8_t* compress(zlibData* zIn);							//Compress via zlib
