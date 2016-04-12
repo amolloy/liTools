@@ -1,4 +1,5 @@
 #include "pakDataTypes.h"
+#include <chrono>
 
 extern list<ThreadConvertHelper> g_lThreadedResources;
 extern bool g_bProgressOverwrite;
@@ -46,9 +47,8 @@ int main(int argc, char** argv)
 	g_bProgressOverwrite = false;
 	biOS = false;
 	g_iNumThreads = 0;
-	DWORD iTicks = GetTickCount();	//Store the starting number of milliseconds
-	
-		
+	auto startTime = std::chrono::high_resolution_clock::now();
+
 	//read in the resource names to unpack
 	initResMap();
 	initSoundManifest();
@@ -183,14 +183,17 @@ int main(int argc, char** argv)
 		oPakList.close();
 	}
 	cout << "\rDone.                                " << endl;
-	
-	iTicks = GetTickCount() - iTicks;
-	float iSeconds = (float)iTicks / 1000.0;	//Get seconds elapsed
+
+	auto endTime = std::chrono::high_resolution_clock::now();
+	auto delta = endTime - startTime;
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(delta);
+
+	float iSeconds = static_cast<float>(milliseconds.count()) / 1000.0;
 	int iMinutes = iSeconds / 60;
 	iSeconds -= iMinutes * 60;
 	
 	cout << "Time elapsed: " << iMinutes << " min, " << iSeconds << " sec" << endl;
 	//system("PAUSE");
-	
+
 	return 0;
 }
