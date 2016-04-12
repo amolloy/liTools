@@ -9,7 +9,7 @@
 #include <tinyxml2.h>
 #include <stdint.h>
 #include <list>
-#include <VFS.h>
+#include <ttvfs.h>
 #include <VFSTools.h>
 #include <iostream>
 #include <map>
