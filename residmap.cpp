@@ -5,13 +5,6 @@
 
 //#define RESIDMAP_FILENAME	"vdata/residmap.dat.xml"
 
-#if 1
-FILE* _wfopen(const wchar_t* filename, const wchar_t* mode)
-{
-	return fopen(ws2s(filename).c_str(), ws2s(mode).c_str());
-}
-#endif
-
 map<wstring, u32> g_repakMappings;
 map<u32, wstring> g_pakMappings;
 

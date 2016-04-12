@@ -23,6 +23,10 @@
 #ifdef _WIN32
 	#define UNICODE
 	#include <windows.h>
+#else
+	#define TEXT2(x) L ## x
+	#define TEXT(x) TEXT2(x)
+	#define _wfopen(filename, mode) fopen(ws2s(filename).c_str(), ws2s(mode).c_str())
 #endif
 using namespace tinyxml2;
 using namespace std;
