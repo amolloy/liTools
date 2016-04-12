@@ -5,7 +5,7 @@ extern bool g_bProgressOverwrite;
 extern unsigned int g_iNumThreads;
 extern bool biOS;
 
-ttvfs::VFSHelper vfs;
+ttvfs::Root vfs;
 
 void parseCmdLine(int argc, char** argv)
 {
@@ -48,7 +48,6 @@ int main(int argc, char** argv)
 	g_iNumThreads = 0;
 	DWORD iTicks = GetTickCount();	//Store the starting number of milliseconds
 	
-	vfs.Prepare();
 		
 	//read in the resource names to unpack
 	initResMap();
