@@ -2,7 +2,7 @@
 
 bool catalogToXML(wstring sFilename)
 {
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("rb"));
+	FILE* f = _wfopen(sFilename.c_str(), L"rb");
 	if(f == NULL)
 	{
 		cout << "Error: could not open " << ws2s(sFilename) << " for reading." << endl;
@@ -105,7 +105,7 @@ bool catalogToXML(wstring sFilename)
 	fclose(f);
 	
 	//Write out to XML
-	sFilename += TEXT(".xml");
+	sFilename += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	XMLElement* root = doc->NewElement("catalogs");
 	
@@ -161,7 +161,7 @@ bool XMLToCatalog(wstring sFilename)
 {
 	//Open file
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
 	if(iErr != XML_NO_ERROR)
@@ -323,7 +323,7 @@ bool XMLToCatalog(wstring sFilename)
 	delete doc;
 	
 	//Open our output file
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
+	FILE* f = _wfopen(sFilename.c_str(), L"wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(sFilename) << endl;

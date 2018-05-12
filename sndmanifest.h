@@ -1,14 +1,16 @@
 #include "pakDataTypes.h"
 
+extern void initSoundManifest();
+
 typedef struct
 {
 	u32 id;
 	const char* name;
 } soundMap;
 
-#define NUM_MAPPINGS 275
+const auto SND_NUM_MAPPINGS = 275;
 
-const soundMap g_soundMap[NUM_MAPPINGS] = {{1493394940u, "data/animations/Intro/matchStrike.flac"},
+const soundMap g_soundMap[SND_NUM_MAPPINGS] = {{1493394940u, "data/animations/Intro/matchStrike.flac"},
 {2504560674u, "data/animations/Scene_MsNancyRocket/RocketLaunch.flac"},
 {2094482604u, "data/characters/msNancy/voice/type.flac"},
 {1176241121u, "data/characters/SugarPlumps/voice/badConnection.flac"},

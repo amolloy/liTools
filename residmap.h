@@ -3,7 +3,11 @@
 #ifndef RESIDMAP_H
 #define RESIDMAP_H
 
-#define NUM_MAPPINGS	3980
+const auto RESID_NUM_MAPPINGS = 3980;
+
+extern void initResMap();
+extern const wchar_t* getName(u32 resId);
+extern u32 getResID(wstring sName);
 
 typedef struct
 {
@@ -11,7 +15,7 @@ typedef struct
 	const char* name;
 } residMap;
 
-const residMap g_residMap[NUM_MAPPINGS] = {{967411u,"data/items/SpiderEggSpider/colorbgicon"},
+const residMap g_residMap[RESID_NUM_MAPPINGS] = {{967411u,"data/items/SpiderEggSpider/colorbgicon"},
 {2752864u,"data/items/MustacheRider/antenna.png.normal"},
 {3358445u,"data/items/OilBarge/OilBarge.anim.xml"},
 {3383729u,"data/animations/itemBtnBorder/ItemBtnBorder.anim.xml"},

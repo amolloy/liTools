@@ -1,5 +1,7 @@
 #include "pakDataTypes.h"
+#include "residmap.h"
 #include "sndmanifest.h"
+#include "stringTools.h"
 
 map<u32, wstring> g_mSoundIDToString;
 map<wstring, u32> g_mStringToSoundID;
@@ -18,7 +20,7 @@ u32 getSoundId(wstring sSound)
 void initSoundManifest()
 {
 	//ofstream oHash("hash3.txt");
-	for(u32 i = 0; i < NUM_MAPPINGS; i++)
+	for(u32 i = 0; i < SND_NUM_MAPPINGS; i++)
 	{
 		g_mSoundIDToString[g_soundMap[i].id] = s2ws(g_soundMap[i].name);
 		g_mStringToSoundID[s2ws(g_soundMap[i].name)] = g_soundMap[i].id;
@@ -33,7 +35,7 @@ void initSoundManifest()
 //Strip numbers from a take to get the sound ID
 wstring getNameFromSoundString(wstring sSoundString)
 {
-	size_t end = sSoundString.rfind(TEXT(".flac"));
+	size_t end = sSoundString.rfind(L".flac");
 	size_t start = sSoundString.rfind('.', end-1);
 	if(start == wstring::npos || end == wstring::npos)	//Not any numbers heres
 		return sSoundString;
@@ -47,7 +49,7 @@ wstring getNameFromSoundString(wstring sSoundString)
 //TODO: Severe problem if unknown ID and this isn't read first!!!
 bool sndManifestToXML(const wchar_t* cFilename)
 {
-	FILE* f = _wfopen(cFilename, TEXT("rb"));
+	FILE* f = fopen(ws2s(cFilename).c_str(), "rb");
 	if(f == NULL)
 	{
 		cout << "Unable to open " << cFilename << endl;
@@ -97,8 +99,8 @@ bool sndManifestToXML(const wchar_t* cFilename)
 	//Done reading the file. Now parse it out to XML
 	XMLDocument* doc = new XMLDocument;
 	XMLElement* root = doc->NewElement("soundmanifest");	//Create the root element
-	root->SetAttribute("numsounds", lSoundTakeGroups.size());
-	root->SetAttribute("numtakes", vSoundTakes.size());
+	root->SetAttribute("numsounds", static_cast<unsigned int>(lSoundTakeGroups.size()));
+	root->SetAttribute("numtakes", static_cast<unsigned int>(vSoundTakes.size()));
 	
 	//ofstream ofile("soundmanifest_out.txt");
 	for(list<soundTakeGroup>::iterator i = lSoundTakeGroups.begin(); i != lSoundTakeGroups.end(); i++)
@@ -120,7 +122,7 @@ bool sndManifestToXML(const wchar_t* cFilename)
 			}
 			//else if(i->numTakes == 1)
 			//	elem->SetAttribute("filename", sFilename.c_str());
-			sFilename += TEXT(".ogg");
+			sFilename += L".ogg";
 			elem2->SetAttribute("filename", ws2s(sFilename).c_str());
 			elem2->SetAttribute("channels", vSoundTakes[j].channels);
 			elem2->SetAttribute("samplespersec", vSoundTakes[j].samplesPerSec);
@@ -140,7 +142,7 @@ bool sndManifestToXML(const wchar_t* cFilename)
 	
 	doc->InsertFirstChild(root);
 	wstring sFilename = cFilename;
-	sFilename += TEXT(".xml");
+	sFilename += L".xml";
 	doc->SaveFile(ws2s(sFilename).c_str());
 	
 	delete doc;
@@ -151,11 +153,11 @@ bool sndManifestToXML(const wchar_t* cFilename)
 bool XMLToSndManifest(const wchar_t* cFilename)
 {
 	wstring sXMLFile = cFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		delete doc;
@@ -202,37 +204,37 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("channels", &tr.channels) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("channels", &tr.channels) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get channels from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("samplespersec", &tr.samplesPerSec) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("samplespersec", &tr.samplesPerSec) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get samplesPerSec from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("samplecountperchannel", &tr.sampleCountPerChannel) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("samplecountperchannel", &tr.sampleCountPerChannel) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get sampleCountPerChannel from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("vorbisworkingsetsizebytes", &tr.vorbisWorkingSetSizeBytes) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("vorbisworkingsetsizebytes", &tr.vorbisWorkingSetSizeBytes) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get vorbisWorkingSetSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("vorbismarkerssizebytes", &tr.vorbisMarkersSizeBytes) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("vorbismarkerssizebytes", &tr.vorbisMarkersSizeBytes) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get vorbisMarkersSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
 				return false;
 			}
-			if(elem2->QueryIntAttribute("vorbispacketssizebytes", &tr.vorbisPacketsSizeBytes) != XML_NO_ERROR)
+			if(elem2->QueryIntAttribute("vorbispacketssizebytes", &tr.vorbisPacketsSizeBytes) != XML_SUCCESS)
 			{
 				cout << "Error: Unable to get vorbisPacketsSizeBytes from take " << iCurTake << " from file " << ws2s(sXMLFile) << endl;
 				delete doc;
@@ -252,7 +254,7 @@ bool XMLToSndManifest(const wchar_t* cFilename)
 	delete doc;	//We're done with this
 	
 	//Repack
-	FILE* f = _wfopen(cFilename, TEXT("wb"));	//Open file for writing
+	FILE* f = fopen(ws2s(cFilename).c_str(), "wb");	//Open file for writing
 	if(f == NULL)
 	{
 		cout << "Unable to open file " << cFilename << " for writing." << endl;

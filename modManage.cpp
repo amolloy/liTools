@@ -1,34 +1,15 @@
+#include <chrono>
 #include "pakDataTypes.h"
+#include "stringTools.h"
 
-#define RESOURCE_1_NAME	TEXT("resource.pak")
-#define RESOURCE_2_NAME	TEXT("embed.pak")
-#define RESOURCE_3_NAME	TEXT("frontend.pak")
+#define RESOURCE_1_NAME	L"resource.pak"
+#define RESOURCE_2_NAME	L"embed.pak"
+#define RESOURCE_3_NAME	L"frontend.pak"
 
 map<u32, virtualFile> g_mOrig;
 map<u32, virtualFile> g_mMods;
 list<resourceHeader> g_lResourceHeaders[3];
 ofstream oWarnings("mergeresults.txt");
-
-//Functions from Stack Overflow peoples
-wstring s2ws(const string& s)
-{
-    int len;
-    int slength = (int)s.length();
-    len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0); 
-    wstring r(len, L'\0');
-    MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
-    return r;
-}
-
-string ws2s(const wstring& s)
-{
-    int len;
-    int slength = (int)s.length();
-    len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0); 
-    string r(len, '\0');
-    WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, &r[0], len, 0, 0); 
-    return r;
-}
 
 void splitOutFiles(FILE* f, list<resourceHeader>* lRH, bool bMod)
 {
@@ -97,7 +78,7 @@ void copyTempFiles()
 //Main program entry point
 int main(int argc, char** argv)
 {
-	DWORD iTicks = GetTickCount();	//Store the starting number of milliseconds
+	auto start = std::chrono::high_resolution_clock::now();
 	
 	if(argc < 2)
 	{
@@ -113,7 +94,7 @@ int main(int argc, char** argv)
 	{
 		//Read in these files
 		cout << "Unpacking mod " << argv[iArg] << endl;
-		FILE* f = _wfopen(s2ws(argv[iArg]).c_str(), TEXT("rb"));
+		FILE* f = fopen(argv[iArg], "rb");
 		if(f == NULL)
 		{
 			cout << "Unable to open file " << argv[iArg] << endl;
@@ -169,7 +150,7 @@ int main(int argc, char** argv)
 		}
 		
 		cout << "Pulling headers from resource blob file " << ws2s(sArg) << endl;
-		FILE* f = _wfopen(sArg.c_str(), TEXT("rb"));
+		FILE* f = fopen(ws2s(sArg).c_str(), "rb");
 		if(f == NULL)
 		{
 			cout << "Unable to open file " << ws2s(sArg) << endl;
@@ -239,7 +220,7 @@ int main(int argc, char** argv)
 		cout << "Repacking resource blob file " << ws2s(sArg) << endl;
 		
 		//Open our output pakfile for writing
-		FILE* f = _wfopen(sArg.c_str(), TEXT("wb"));
+		FILE* f = fopen(ws2s(sArg).c_str(), "wb");
 		if(f == NULL)
 		{
 			cout << "Unable to open file " << ws2s(sArg) << " for writing. Skipping..." << endl;
@@ -294,12 +275,11 @@ int main(int argc, char** argv)
 	//Done
 	cout << endl << "Done." << endl;
 	
-	iTicks = GetTickCount() - iTicks;
-	float iSeconds = (float)iTicks / 1000.0;	//Get seconds elapsed
-	int iMinutes = (int)iSeconds / 60;
-	iSeconds -= iMinutes * 60;
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::minutes>(end - start);
 	
-	cout << "Time elapsed: " << iMinutes << " min, " << iSeconds << " sec" << endl;
+	cout << "Time elapsed: " << duration.count() << " min" << endl;
+
 	oWarnings << "Done." << endl;
 	oWarnings.close();
 	return 0;

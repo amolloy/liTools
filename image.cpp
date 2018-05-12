@@ -1,14 +1,15 @@
 #include "pakDataTypes.h"
 #include "png.h"
+#include "stringTools.h"
 
 bool biOS;	//If we're decompressing iOS pakfiles
 
 bool ios_convertToPNG(const wchar_t* cFilename, uint8_t* data, u32 size)
 {
 	wstring sFilename = cFilename;
-	sFilename += TEXT(".pvr");
+	sFilename += L".pvr";
 	//Block copy file over
-	FILE* output = _wfopen(sFilename.c_str(), TEXT("wb"));
+	FILE* output = fopen(ws2s(sFilename).c_str(), "wb");
 	if(output == NULL)
 	{
 		cout << "Output PVR file " << ws2s(sFilename) << " NULL" << endl;
@@ -21,8 +22,8 @@ bool ios_convertToPNG(const wchar_t* cFilename, uint8_t* data, u32 size)
 	
 	//Write image header out to separate file
 	sFilename = cFilename;
-	sFilename += TEXT(".imgheader");
-	output = _wfopen(sFilename.c_str(), TEXT("wb"));
+	sFilename += L".imgheader";
+	output = fopen(ws2s(sFilename).c_str(), "wb");
 	if(output == NULL)
 	{
 		cout << "Output image header file " << ws2s(sFilename) << " NULL" << endl;
@@ -32,6 +33,8 @@ bool ios_convertToPNG(const wchar_t* cFilename, uint8_t* data, u32 size)
 	//Write first 12 bytes
 	fwrite(data, 1, sizeof(ImageHeader), output);
 	fclose(output);
+	
+	return true;
 }
 
 //Save a PNG file from decompressed data
@@ -51,7 +54,7 @@ bool convertToPNG(const wchar_t* cFilename, uint8_t* data, u32 size)
   int           bit_depth = 8;
   int           channels = 4;
   
-  png_file = _wfopen(cFilename, TEXT("wb"));
+  png_file = fopen(ws2s(cFilename).c_str(), "wb");
   if(png_file == NULL)
   {
     cout << "PNG file " << ws2s(cFilename) << " NULL" << endl;
@@ -235,7 +238,7 @@ bool convertFromPNG(const wchar_t* cFilename)
   int           alpha_present;
   int           ret;
 
-  png_file = _wfopen(cFilename, TEXT("rb"));
+  png_file = fopen(ws2s(cFilename).c_str(), "rb");
   if(png_file == NULL)
   {
 	cout << "Unable to open " << cFilename << " for reading." << endl;
@@ -377,8 +380,8 @@ bool convertFromPNG(const wchar_t* cFilename)
   wchar_t* cOutFilename = (wchar_t*) malloc(sizeof(wchar_t)*(wstrlen(cFilename) + 7));
   wstrcpy(cOutFilename, cFilename);
   wstring sTemp = cOutFilename;
-  sTemp += TEXT(".temp");
-  output_file = _wfopen(sTemp.c_str(), TEXT("wb"));
+  sTemp += L".temp";
+  output_file = fopen(ws2s(sTemp).c_str(), "wb");
   if(output_file == NULL)
   {
 	cout << "output file null" << endl;
@@ -441,7 +444,7 @@ bool convertFromPNG(const wchar_t* cFilename)
 
 bool myPicturesToXML(wstring sFilename)
 {
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("rb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "rb");
 	if(f == NULL)
 	{
 		cout << "Error: could not open " << ws2s(sFilename) << " for reading." << endl;
@@ -487,7 +490,7 @@ bool myPicturesToXML(wstring sFilename)
 	
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	XMLElement* root = doc->NewElement("images");
 	
@@ -505,9 +508,9 @@ bool myPicturesToXML(wstring sFilename)
 		
 		iCurImg++;
 		wstring sName = sFilename;
-		sName += TEXT(".");
+		sName += L".";
 		sName.push_back(iCurImg + L'0');
-		sName += TEXT(".png");
+		sName += L".png";
 		bool bTemp = biOS;
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
@@ -526,10 +529,10 @@ bool myPicturesToXML(wstring sFilename)
 bool XMLToMyPictures(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		delete doc;
@@ -558,8 +561,8 @@ bool XMLToMyPictures(wstring sFilename)
 		convertFromPNG(sTempFile.c_str());
 		
 		//Open the temp image file
-		sTempFile += TEXT(".temp");
-		FILE* fp = _wfopen(sTempFile.c_str(), TEXT("rb"));
+		sTempFile += L".temp";
+		FILE* fp = fopen(ws2s(sTempFile).c_str(), "rb");
 		if(fp == NULL) continue;
 		
 		//Read in image header
@@ -594,7 +597,7 @@ bool XMLToMyPictures(wstring sFilename)
 	delete doc;	//Done with this
 	
 	//Open our output file
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(sFilename) << endl;
@@ -625,7 +628,7 @@ bool XMLToMyPictures(wstring sFilename)
 
 bool smokeImageToXML(wstring sFilename)
 {
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("rb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "rb");
 	if(f == NULL)
 	{
 		cout << "Error: could not open " << ws2s(sFilename) << " for reading." << endl;
@@ -671,7 +674,7 @@ bool smokeImageToXML(wstring sFilename)
 	
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	XMLElement* root = doc->NewElement("images");
 	
@@ -699,9 +702,9 @@ bool smokeImageToXML(wstring sFilename)
 		
 		iCurImg++;
 		wstring sName = sFilename;
-		sName += TEXT(".");
+		sName += L".";
 		sName.push_back(iCurImg + L'0');
-		sName += TEXT(".png");
+		sName += L".png";
 		bool bTemp = biOS;
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
@@ -721,10 +724,10 @@ bool smokeImageToXML(wstring sFilename)
 bool XMLToSmokeImage(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		delete doc;
@@ -753,8 +756,8 @@ bool XMLToSmokeImage(wstring sFilename)
 		convertFromPNG(sTempFile.c_str());
 		
 		//Open the temp image file
-		sTempFile += TEXT(".temp");
-		FILE* fp = _wfopen(sTempFile.c_str(), TEXT("rb"));
+		sTempFile += L".temp";
+		FILE* fp = fopen(ws2s(sTempFile).c_str(), "rb");
 		if(fp == NULL) continue;
 		
 		//Read in image header
@@ -771,7 +774,7 @@ bool XMLToSmokeImage(wstring sFilename)
 		sim.height = ih.height;
 		sim.offset = vPicData.size();
 		sim.id = 0;
-		if(elem->QueryUnsignedAttribute("id", &sim.id) != XML_NO_ERROR) continue;
+		if(elem->QueryUnsignedAttribute("id", &sim.id) != XML_SUCCESS) continue;
 		for(u32 i = 0; i < ih.width * ih.height * 4; i++)
 		{
 			uint8_t c;
@@ -792,7 +795,7 @@ bool XMLToSmokeImage(wstring sFilename)
 	delete doc;	//Done with this
 	
 	//Open our output file
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(sFilename) << endl;
@@ -823,7 +826,7 @@ bool XMLToSmokeImage(wstring sFilename)
 
 bool fluidPalettesToXML(wstring sFilename)
 {
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("rb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "rb");
 	if(f == NULL)
 	{
 		cout << "Error: could not open " << ws2s(sFilename) << " for reading." << endl;
@@ -871,7 +874,7 @@ bool fluidPalettesToXML(wstring sFilename)
 	
 	//Now, create XML file
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	XMLElement* root = doc->NewElement("images");
 	
@@ -889,9 +892,9 @@ bool fluidPalettesToXML(wstring sFilename)
 		
 		iCurImg++;
 		wstring sName = sFilename;
-		sName += TEXT(".");
+		sName += L".";
 		sName.push_back(iCurImg + L'0');
-		sName += TEXT(".png");
+		sName += L".png";
 		bool bTemp = biOS;
 		biOS = false;
 		convertToPNG(sName.c_str(), data, i->width * 4);
@@ -911,10 +914,10 @@ bool fluidPalettesToXML(wstring sFilename)
 bool XMLToFluidPalettes(wstring sFilename)
 {
 	wstring sXMLFile = sFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		delete doc;
@@ -943,8 +946,8 @@ bool XMLToFluidPalettes(wstring sFilename)
 		convertFromPNG(sTempFile.c_str());
 		
 		//Open the temp image file
-		sTempFile += TEXT(".temp");
-		FILE* fp = _wfopen(sTempFile.c_str(), TEXT("rb"));
+		sTempFile += L".temp";
+		FILE* fp = fopen(ws2s(sTempFile).c_str(), "rb");
 		if(fp == NULL) continue;
 		
 		//Read in image header
@@ -960,7 +963,7 @@ bool XMLToFluidPalettes(wstring sFilename)
 		fpm.width = ih.width;
 		fpm.offset = vPicData.size()/4;
 		fpm.id = 0;
-		if(elem->QueryUnsignedAttribute("id", &fpm.id) != XML_NO_ERROR) continue;
+		if(elem->QueryUnsignedAttribute("id", &fpm.id) != XML_SUCCESS) continue;
 		for(u32 i = 0; i < ih.width * ih.height * 4; i++)
 		{
 			uint8_t c;
@@ -980,7 +983,7 @@ bool XMLToFluidPalettes(wstring sFilename)
 	delete doc;	//Done with this
 	
 	//Open our output file
-	FILE* f = _wfopen(sFilename.c_str(), TEXT("wb"));
+	FILE* f = fopen(ws2s(sFilename).c_str(), "wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(sFilename) << endl;

@@ -1,7 +1,10 @@
 #include "pakDataTypes.h"
 #include "residmap.h"
+#include "stringTools.h"
 
 //#define RESIDMAP_FILENAME	"vdata/residmap.dat.xml"
+
+static u32 filenameHash(wstring sFilename);
 
 map<wstring, u32> g_repakMappings;
 map<u32, wstring> g_pakMappings;
@@ -22,7 +25,7 @@ u32 getKnownResID(wstring sName)
 u32 getResID(wstring sName)
 {
 	if(!g_repakMappings.count(sName))
-		return hash(sName);
+		return filenameHash(sName);
 	return g_repakMappings[sName];
 }
 
@@ -37,32 +40,11 @@ const wchar_t* getName(u32 resId)
 //Parse our array of values to get the mappings
 void initResMap()
 {
-	for(u32 i = 0; i < NUM_MAPPINGS; i++)
+	for(u32 i = 0; i < RESID_NUM_MAPPINGS; i++)
 	{
 		g_repakMappings[s2ws(g_residMap[i].name)] = g_residMap[i].id;
 		g_pakMappings[g_residMap[i].id] = s2ws(g_residMap[i].name);
 	}
-}
-
-//Functions from Stack Overflow peoples
-wstring s2ws(const string& s)
-{
-    int len;
-    int slength = (int)s.length();
-    len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0); 
-    wstring r(len, L'\0');
-    MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
-    return r;
-}
-
-string ws2s(const wstring& s)
-{
-    int len;
-    int slength = (int)s.length();
-    len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0); 
-    string r(len, '\0');
-    WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, &r[0], len, 0, 0); 
-    return r;
 }
 
 //convert a string to lowercase. Also change forward slashes back to backslashes.
@@ -98,7 +80,7 @@ wstring toBackslashes(const wstring s)
   return result;
 }
 
-//Function from Allan for getting a hash from a filename NOTE: Don't use directly! Use hash() instead
+//Function from Allan for getting a hash from a filename NOTE: Don't use directly! Use filenameHash() instead
 u32 LIHash( const wchar_t *pCaseInsensitiveStr )
 {
 	u32 hash = 0xABABABAB;
@@ -113,7 +95,7 @@ u32 LIHash( const wchar_t *pCaseInsensitiveStr )
 }
 
 //Have to do some converting to get from std::wstring to wchar_t*
-u32 hash(wstring sFilename)
+u32 filenameHash(wstring sFilename)
 {
 	//Convert to lowercase first
 	return LIHash(stolower(sFilename).c_str());
@@ -123,7 +105,7 @@ u32 hash(wstring sFilename)
 bool parseResidMap(const wchar_t* cFilename)
 {
 	//Read in the mappings directly from residmap.dat
-	FILE* fp = _wfopen(cFilename, TEXT("rb"));
+	FILE* fp = fopen(ws2s(cFilename).c_str(), "rb");
 	if(fp == NULL)
 	{
 		cout << "Error: Unable to open file " << ws2s(cFilename) << endl;
@@ -240,12 +222,12 @@ bool residMapToXML(const wchar_t* cFilename)
 	
 	//Now save this out to XML
 	wstring sFilename = cFilename;
-	sFilename += TEXT(".xml");
+	sFilename += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sFilename).c_str());
 	XMLElement* root;
 	map<u32,wstring> mCurXMLMappings;
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		// residmap.xml isn't here or is malformed; overwrite
 		delete doc;
@@ -299,10 +281,10 @@ bool XMLToResidMap(const wchar_t* cFilename)
 {
 	//Open file
 	wstring sXMLFile = cFilename;
-	sXMLFile += TEXT(".xml");
+	sXMLFile += L".xml";
 	XMLDocument* doc = new XMLDocument;
 	int iErr = doc->LoadFile(ws2s(sXMLFile).c_str());
-	if(iErr != XML_NO_ERROR)
+	if(iErr != XML_SUCCESS)
 	{
 		cout << "Error parsing XML file " << ws2s(sXMLFile) << ": Error " << iErr << endl;
 		delete doc;
@@ -326,7 +308,7 @@ bool XMLToResidMap(const wchar_t* cFilename)
 	for(XMLElement* elem = root->FirstChildElement("mapping"); elem != NULL; elem = elem->NextSiblingElement("mapping"))
 	{
 		int id;
-		if(elem->QueryIntAttribute("id", &id) != XML_NO_ERROR)
+		if(elem->QueryIntAttribute("id", &id) != XML_SUCCESS)
 		{
 			cout << "Unable to get mapping ID from XML file " << ws2s(sXMLFile) << endl;
 			delete doc;
@@ -363,7 +345,7 @@ bool XMLToResidMap(const wchar_t* cFilename)
 	delete doc;	//Done reading XML
 	
 	//Open our output file
-	FILE* f = _wfopen(cFilename, TEXT("wb"));
+	FILE* f = fopen(ws2s(cFilename).c_str(), "wb");
 	if(f == NULL)
 	{
 		cout << "Error: Unable to open output file " << ws2s(cFilename) << endl;

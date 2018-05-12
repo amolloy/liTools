@@ -1,11 +1,14 @@
+#include <chrono>
 #include "pakDataTypes.h"
+#include "residmap.h"
+#include "sndmanifest.h"
+#include "threadDecompress.h"
+#include "stringTools.h"
 
 extern list<ThreadConvertHelper> g_lThreadedResources;
 extern bool g_bProgressOverwrite;
 extern unsigned int g_iNumThreads;
 extern bool biOS;
-
-ttvfs::VFSHelper vfs;
 
 void parseCmdLine(int argc, char** argv)
 {
@@ -46,10 +49,8 @@ int main(int argc, char** argv)
 	g_bProgressOverwrite = false;
 	biOS = false;
 	g_iNumThreads = 0;
-	DWORD iTicks = GetTickCount();	//Store the starting number of milliseconds
-	
-	vfs.Prepare();
-		
+	auto start = std::chrono::high_resolution_clock::now();
+			
 	//read in the resource names to unpack
 	initResMap();
 	initSoundManifest();
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
 		fclose(f);
 		ofstream oPakList(sPakListFilename.c_str());
 		wstring sIsResidFilename = getName(lResourceHeaders.front().id);
-		if(sIsResidFilename == TEXT(RESIDMAP_NAME))
+		if(sIsResidFilename == RESIDMAP_NAME)
 			lResourceHeaders.pop_front();	//HACK: So we don't end up with recursive residmap.dat files in our pakfiles...
 		for(list<resourceHeader>::iterator i = lResourceHeaders.begin(); i != lResourceHeaders.end(); i++)
 		{
@@ -185,12 +186,10 @@ int main(int argc, char** argv)
 	}
 	cout << "\rDone.                                " << endl;
 	
-	iTicks = GetTickCount() - iTicks;
-	float iSeconds = (float)iTicks / 1000.0;	//Get seconds elapsed
-	int iMinutes = iSeconds / 60;
-	iSeconds -= iMinutes * 60;
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::minutes>(end - start);
 	
-	cout << "Time elapsed: " << iMinutes << " min, " << iSeconds << " sec" << endl;
+	cout << "Time elapsed: " << duration.count() << " min" << endl;
 	//system("PAUSE");
 	
 	return 0;
